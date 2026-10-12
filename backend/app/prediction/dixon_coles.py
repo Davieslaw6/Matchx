@@ -44,7 +44,7 @@ class DixonColesModel:
         home_rate = self.league_home_goals * self.attack_strength[home_team] \
                     * self.defence_vulnerability[away_team] * self.home_advantage
         away_rate = self.league_away_goals * self.attack_strength[away_team] \
-                    * self.defence_vulnerability[home_team] / self.home_advantage
+                    * self.defence_vulnerability[home_team]
         if not (0 < home_rate <= 12 and 0 < away_rate <= 12):
             raise ModelFitError("Unsupported expected-goal rate outside the score-grid domain.")
         return home_rate, away_rate
