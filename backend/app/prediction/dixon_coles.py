@@ -183,6 +183,6 @@ def fit_dixon_coles(
         time_decay_days=time_decay_days,
         data_cutoff=cutoff,
         training_matches=len(matches),
-        weighted_log_likelihood=-float(fitted.fun) + l2_penalty * (float(np.sum(attacks ** 2)) + float(np.sum(defences ** 2)),
+        weighted_log_likelihood=-float(fitted.fun) + l2_penalty * (float(np.sum(attacks ** 2)) + float(np.sum(defences ** 2))),
         optimizer_message=str(fitted.message),
     )
