@@ -6,7 +6,7 @@
 - Authenticated paginated fixture explorer API and responsive frontend explorer are wired; anonymous access is expected to return 401.
 - football-data.org v4 adapter, football-data.co.uk CSV results and historical 1X2 odds parser/import CLI, Unicode/RapidFuzz team resolver and provider sync service are implemented in the repository.
 - Prediction code includes M0 Poisson calculations, M1 Dixon-Coles fitting, expanding-window decay selection, walk-forward evaluation/reporting, and a CLI that registers models and stores pre-kickoff predictions with data cutoffs and feature snapshots.
-- Added unit/integration tests for auth/CSRF, schema contract, CSV parsing/import idempotency, provider payload validation/sync idempotency, team resolution and Dixon-Coles probability/cutoff invariants.
+- Added unit/integration tests for auth/CSRF, schema contract, CSV parsing/import idempotency, provider payload validation/sync idempotency, team resolution, Dixon-Coles probability/cutoff invariants, AI tool allowlisting, ticket preview/confirm idempotency, screenshot validation and evaluation cutoff guards. Tests remain unexecuted.
 - Frontend dependency ranges updated to Next.js 16.4, React 19.3, TypeScript 7, Node 24 CI; PostgreSQL 18 Compose, multi-stage backend/frontend images and ADR 0004 are added.
 - Added TEST_REPORT.md and MODEL_REPORT.md with explicit NOT RUN / NOT GENERATED status.
 - UNVERIFIED: no local test/build/migration execution, no confirmed CI run, no live provider request and no real historical model backtest. Do not treat the branch as production-ready.
