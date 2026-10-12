@@ -24,6 +24,8 @@ class Settings(BaseSettings):
         if public_bind and not self.owner_exists:
             raise RuntimeError("Refusing public-interface startup without an owner. Provision an owner first.")
         secret = self.session_secret.get_secret_value()
+        if not secret.strip():
+            raise RuntimeError("SESSION_SECRET must not be empty.")
         if self.environment == "production" and (
             secret == "development-only-change-me"
             or len(secret) < 32
