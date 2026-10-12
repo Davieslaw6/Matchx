@@ -5,7 +5,7 @@
 - Phase 2 repository implementation: SQLAlchemy 2 models, async Alembic environment and frozen explicit initial revision, CLI-only owner create/reset with Argon2id, opaque hashed sessions, CSRF checks, login throttling/lockout, standard API error envelopes, login UI and dashboard session guard.
 - Authenticated paginated fixture explorer API and responsive frontend explorer are wired; anonymous access is expected to return 401.
 - football-data.org v4 adapter, football-data.co.uk CSV result parser/import CLI, Unicode/RapidFuzz team resolver and provider sync service are implemented in the repository.
-- Prediction code includes M0 Poisson calculations and an M1 Dixon-Coles fitter with sum-to-zero strength constraints, low-score rho correction, strict pre-cutoff training and expanding-window time-decay selection.
+- Prediction code includes M0 Poisson calculations, M1 Dixon-Coles fitting, expanding-window decay selection, walk-forward evaluation/reporting, and a CLI that registers models and stores pre-kickoff predictions with data cutoffs and feature snapshots.
 - Added unit/integration tests for auth/CSRF, schema contract, CSV parsing/import idempotency, provider payload validation/sync idempotency, team resolution and Dixon-Coles probability/cutoff invariants.
 - Frontend dependency ranges updated to Next.js 16.4, React 19.3, TypeScript 7, Node 24 CI; ADR 0004 records rationale.
 - Added TEST_REPORT.md and MODEL_REPORT.md with explicit NOT RUN / NOT GENERATED status.
