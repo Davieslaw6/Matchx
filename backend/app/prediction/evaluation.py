@@ -10,6 +10,9 @@ from app.models import Fixture, MatchResult, Prediction, PredictionEvaluation
 OUTCOMES = ("home_win", "draw", "away_win")
 
 async def evaluate_finished_predictions(db: AsyncSession, *, limit: int = 500) -> dict[str, Any]:
+    already_evaluated = select(PredictionEvaluation.id).where(
+        PredictionEvaluation.prediction_id == Prediction.id
+    ).exists()
     rows = (await db.execute(
         select(Prediction, Fixture, MatchResult)
         .join(Fixture, Prediction.fixture_id == Fixture.id)
@@ -17,19 +20,15 @@ async def evaluate_finished_predictions(db: AsyncSession, *, limit: int = 500) -
         .where(Fixture.status == "finished", Fixture.kickoff_at.is_not(None),
                Prediction.status.in_(("live", "superseded")),
                Prediction.data_cutoff_at < Fixture.kickoff_at,
-               Prediction.created_at < Fixture.kickoff_at)
+               Prediction.created_at < Fixture.kickoff_at,
+               ~already_evaluated)
         .order_by(Fixture.kickoff_at.desc(), Prediction.created_at.desc())
-        .limit(max(limit * 5, limit))
+        .limit(limit)
     )).all()
-    existing_ids = set((await db.scalars(select(PredictionEvaluation.prediction_id))).all())
     evaluated: list[dict[str, Any]] = []
     skipped = 0
     for prediction, fixture, result in rows:
-        if prediction.id in existing_ids:
-            continue
-        if len(evaluated) >= limit:
-            break
-        raw = prediction.probabilities
+                raw = prediction.probabilities
         try:
             probs = {name: float(raw[name]) for name in OUTCOMES}
         except (KeyError, TypeError, ValueError):
@@ -57,7 +56,6 @@ async def evaluate_finished_predictions(db: AsyncSession, *, limit: int = 500) -
             "probability_floor_used": actual_probability < 1e-15,
         }
         db.add(PredictionEvaluation(prediction_id=prediction.id, metrics=metrics))
-        existing_ids.add(prediction.id)
         evaluated.append(metrics)
     await db.flush()
     count = len(evaluated)
