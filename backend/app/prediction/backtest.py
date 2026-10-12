@@ -105,9 +105,12 @@ def walk_forward_backtest(
     skipped = {"unseen_team": 0, "invalid_grid": 0, "fit_failure": 0}
     cursor, fold_index = initial_train_matches, 0
     while cursor < len(ordered):
-        training = ordered[:cursor]
+        candidate_training = ordered[:cursor]
         test = ordered[cursor:cursor + test_window_matches]
         fold_cutoff = min(match.played_at.astimezone(timezone.utc) for match in test)
+        # Exclude same-timestamp matches that happen to precede the fold boundary in list order.
+        training = [match for match in candidate_training
+                    if match.played_at.astimezone(timezone.utc) < fold_cutoff]
         try:
             if tune_time_decay:
                 selection = select_time_decay(training, data_cutoff=fold_cutoff,
