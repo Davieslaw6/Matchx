@@ -39,7 +39,11 @@ For a bounded football-data.org sync, set PROVIDER_API_KEY in backend/.env and r
 
     python -m app.sports.sync_football_data --start 2026-10-01 --end 2026-10-14 --competition PL
 
-Provider coverage, quota and licence terms must be checked against current official documentation. Live provider calls have not been verified. The importer does not fabricate kickoff times for date-only CSV rows.
+After importing enough historical results, run a chronological backtest for an internal competition UUID:
+
+    python -m app.prediction.backtest_cli --competition-id YOUR_COMPETITION_UUID --cutoff 2026-10-01
+
+The backtest writes docs/MODEL_REPORT.md and docs/model_backtest_latest.json with the data hash, cutoffs, baselines, metrics and bootstrap intervals. It exits with an explicit insufficient-data error when a valid walk-forward run cannot be produced. Provider coverage, quota and licence terms must be checked against current official documentation. Live provider calls and the backtest have not been verified. The importer does not fabricate kickoff times for date-only CSV rows.
 
 The default configuration uses SQLite for local development. Set DATABASE_URL=sqlite+aiosqlite:///./matchx-dev.db explicitly if desired. PostgreSQL is the primary/CI database. Use Alembic for schema changes; do not use metadata.create_all() as an application startup shortcut.
 
