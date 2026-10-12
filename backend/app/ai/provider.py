@@ -163,10 +163,14 @@ class OpenAIResponsesProvider:
                         value = result.get(key)
                         if isinstance(value, str):
                             sources[value] = {"type": key.removesuffix("_id"), "id": value}
-                    for fixture in result.get("fixtures", []) if isinstance(result.get("fixtures"), list) else []:
-                        if isinstance(fixture, dict) and isinstance(fixture.get("fixture_id"), str):
-                            source_id = fixture["fixture_id"]
-                            sources[source_id] = {"type": "fixture", "id": source_id}
+                    for collection_name in ("fixtures", "matches"):
+                        collection = result.get(collection_name)
+                        if not isinstance(collection, list):
+                            continue
+                        for fixture in collection:
+                            if isinstance(fixture, dict) and isinstance(fixture.get("fixture_id"), str):
+                                source_id = fixture["fixture_id"]
+                                sources[source_id] = {"type": "fixture", "id": source_id}
                     await db.rollback()
                     output_text = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
                     outputs.append({"type": "function_call_output", "call_id": call_id,
