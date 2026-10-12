@@ -46,6 +46,7 @@ jobs:
       - run: alembic upgrade head
       - run: alembic check
       - run: pytest -q --cov=app.prediction --cov-report=term-missing
+      - run: docker build -t matchx-backend:ci .
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -64,3 +65,4 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+      - run: docker build --build-arg MATCHX_BACKEND_ORIGIN=http://backend:8000 -t matchx-frontend:ci .
