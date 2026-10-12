@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { formatKickoff } from "@/lib/format";
 import { useRouter } from "next/navigation";
 
 type Fixture = {
@@ -96,7 +97,7 @@ export default function ExplorerPage() {
             {data.items.map((fixture) => <article className="fixture-row" key={fixture.id}>
               <div className="fixture-meta"><span>{fixture.competition}</span><span className="status-pill">{fixture.status}</span></div>
               <h2>{fixture.home_team} <span>vs</span> {fixture.away_team}</h2>
-              <p>{fixture.match_date ?? "Match date unavailable"}{fixture.kickoff_at ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(fixture.kickoff_at))}` : " · Kickoff time unavailable"}</p>
+              <p>{fixture.match_date ?? "Match date unavailable"} · {formatKickoff(fixture.kickoff_at)}</p>
               <span className="coming-label">{fixture.prediction_available ? "Prediction stored" : "No prediction stored"}</span>
             </article>)}
           </div>
