@@ -43,7 +43,7 @@ type Detail = {
 };
 type ApiError = { message?: string; detail?: { message?: string } };
 type TicketOption = { id: string; name: string; status: string; selection_count: number };
-type PendingTicketAction = { token: string; summary: string; warnings: string[] };
+type PendingTicketAction = { token: string; idempotencyKey: string; summary: string; warnings: string[] };
 
 function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
@@ -114,10 +114,10 @@ export default function AnalysisPage() {
           ticket_id: ticketId, fixture_id: detail.id, market_odds_id: odd.id,
         } }),
       });
-      const body = (await response.json()) as { confirmation_token?: string; preview?: { summary?: string; warnings?: string[] }; message?: string; detail?: { message?: string } };
+      const body = (await response.json()) as { confirmation_token?: string; idempotency_key?: string; preview?: { summary?: string; warnings?: string[] }; message?: string; detail?: { message?: string } };
       if (response.status === 401) { router.replace("/login"); return; }
-      if (!response.ok || !body.confirmation_token) throw new Error(body.detail?.message || body.message || "Could not preview selection.");
-      setPendingAction({ token: body.confirmation_token, summary: body.preview?.summary ?? "Add selection to ticket", warnings: body.preview?.warnings ?? [] });
+      if (!response.ok || !body.confirmation_token || !body.idempotency_key) throw new Error(body.detail?.message || body.message || "Could not preview selection.");
+      setPendingAction({ token: body.confirmation_token, idempotencyKey: body.idempotency_key, summary: body.preview?.summary ?? "Add selection to ticket", warnings: body.preview?.warnings ?? [] });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not preview selection.");
     } finally {
@@ -134,7 +134,7 @@ export default function AnalysisPage() {
     try {
       const response = await fetch("/api/v1/tickets/confirm", {
         method: "POST", credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken, "Idempotency-Key": pendingAction.idempotencyKey },
         body: JSON.stringify({ confirmation_token: pendingAction.token }),
       });
       const body = (await response.json()) as { message?: string; detail?: { message?: string } };
