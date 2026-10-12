@@ -8,6 +8,7 @@ def test_parses_real_schema_and_marks_date_only_kickoff():
     assert len(records) == 1
     assert records[0]["home_goals"] == 2
     assert records[0]["kickoff_precision"] == "date_only"
+    assert records[0]["kickoff_at"] is None
 
 def test_rejects_result_conflicting_with_score():
     with pytest.raises(CsvImportError, match="conflicts"):
