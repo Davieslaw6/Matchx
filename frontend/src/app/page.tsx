@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Activity, Bot, CalendarDays, ChartNoAxesCombined, FileImage } from "lucide-react";
+import { Activity, Bot, CalendarDays, ChartNoAxesCombined, FileImage, ShieldAlert } from "lucide-react";
 
 type Health = { status?: string; service?: string; readiness?: string };
 type AuthStatus = "checking" | "authenticated" | "unavailable";
@@ -72,6 +72,7 @@ export default function HomePage() {
         <article className="tool-card"><CalendarDays/><h3>Ticket manager</h3><p>Build a draft from stored market odds, review snapshots and export CSV.</p><span className="coming-label">Preview + confirm required</span><Link className="text-link" href="/tickets">Open tickets →</Link></article>
         <article className="tool-card"><FileImage/><h3>Screenshot review</h3><p>Upload an image, extract OCR candidates and manually review the result.</p><span className="coming-label">No automatic odds writes</span><Link className="text-link" href="/imports">Open imports →</Link></article>
         <article className="tool-card"><ChartNoAxesCombined/><h3>Prediction history</h3><p>Track stored predictions against imported results using Brier score, log loss and top-outcome accuracy.</p><span className="coming-label">Post-match evaluation</span><Link className="text-link" href="/history">Open history →</Link></article>
+        <article className="tool-card"><ShieldAlert/><h3>Booking codes</h3><p>Check whether a supported provider adapter is configured before requesting any code.</p><span className="coming-label">Provider unavailable</span><Link className="text-link" href="/booking-codes">Check status →</Link></article>
       </div></section><footer>Owner-only workspace · No automatic wager placement · No outcome guarantees</footer>
   </main>;
 }
