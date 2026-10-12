@@ -148,3 +148,40 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .composer-footer button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
 .composer-footer button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 760px) { .chat-shell { grid-template-columns: 1fr; } .conversation-sidebar { order: 2; } .chat-panel { order: 1; } .chat-messages { max-height: 60vh; } .chat-message { max-width: 100%; } }
+
+.confirmation-panel { margin: 22px 0; padding: 20px; border: 1px solid var(--accent); border-radius: 15px; background: var(--surface); }
+.confirmation-panel h2 { margin: 10px 0; font-size: 18px; }
+.confirmation-panel p { color: var(--muted); font-size: 12px; }
+.confirmation-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.confirmation-actions button, .ticket-create-form button { padding: 10px 13px; border: 0; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.secondary-button { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 11px; cursor: pointer; }
+.ticket-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 14px; align-items: start; }
+.ticket-sidebar, .ticket-detail { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ticket-sidebar > h2, .ticket-revisions h3 { margin-bottom: 14px; font-size: 15px; }
+.ticket-list-item { display: grid; gap: 5px; width: 100%; margin-bottom: 7px; padding: 11px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.ticket-list-item:hover, .ticket-list-item.selected { border-color: var(--border); background: var(--background); }
+.ticket-list-item strong { font-size: 12px; overflow-wrap: anywhere; }
+.ticket-list-item span, .empty-copy { color: var(--muted); font-size: 10px; }
+.ticket-create-form { display: grid; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.ticket-create-form h3 { font-size: 13px; }
+.ticket-create-form label { color: var(--muted); font-size: 11px; }
+.ticket-create-form input, .ticket-create-form textarea { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--text); font: inherit; font-size: 12px; }
+.ticket-create-form button:disabled { opacity: .45; cursor: not-allowed; }
+.ticket-detail-header { display: flex; justify-content: space-between; gap: 12px; }
+.ticket-detail-header h2 { margin: 7px 0; font-size: 21px; }
+.ticket-detail-header p { color: var(--muted); font-size: 12px; }
+.ticket-header-actions { display: flex; flex-direction: column; align-items: end; gap: 8px; }
+.ticket-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+.ticket-stats > div { display: grid; gap: 7px; padding: 13px; border: 1px solid var(--border); border-radius: 10px; }
+.ticket-stats span { color: var(--muted); font-size: 10px; }
+.ticket-stats strong { font-size: 16px; overflow-wrap: anywhere; }
+.ticket-stats .id-value { font-size: 10px; }
+.ticket-selections { display: grid; gap: 10px; }
+.ticket-selection { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; }
+.ticket-selection h3 { margin: 7px 0; font-size: 14px; }
+.ticket-selection p, .ticket-selection span { color: var(--muted); font-size: 11px; }
+.ticket-selection span { overflow-wrap: anywhere; }
+.ticket-revisions { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+.ticket-revisions article { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.ticket-revisions article span, .ticket-revisions > p { color: var(--muted); }
+@media (max-width: 800px) { .ticket-layout { grid-template-columns: 1fr; } .ticket-sidebar { order: 2; } .ticket-detail { order: 1; } .ticket-stats { grid-template-columns: 1fr; } .ticket-selection { align-items: start; flex-direction: column; } }
