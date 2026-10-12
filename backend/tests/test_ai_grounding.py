@@ -11,3 +11,13 @@ def test_grounding_rejects_unsupported_number():
 
 def test_grounding_allows_non_numeric_unavailable_data_statement():
     assert verify_numeric_grounding("No stored odds are available for this fixture.", [])
+
+import pytest
+from app.ai.tools import ToolRegistry
+
+@pytest.mark.asyncio
+async def test_tool_registry_rejects_unknown_tools_and_extra_arguments():
+    registry = ToolRegistry()
+    assert (await registry.dispatch("execute_python", "{}", None))["status"] == "unsupported_tool"
+    invalid = await registry.dispatch("search_fixtures", '{"query":"Arsenal","sql":"DROP TABLE teams"}', None)
+    assert invalid["status"] == "invalid_arguments"
