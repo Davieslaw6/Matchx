@@ -18,7 +18,7 @@ jobs:
       HOST: 127.0.0.1
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18-alpine
         env:
           POSTGRES_DB: matchx
           POSTGRES_USER: matchx
