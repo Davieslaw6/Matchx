@@ -1,5 +1,5 @@
 """Owner-authenticated fixture explorer API."""
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,6 +13,12 @@ from app.db import get_db
 from app.models import Competition, Fixture, MarketOdds, MatchResult, Prediction, Team, Session
 
 router = APIRouter(prefix="/api/v1/fixtures", tags=["fixtures"])
+
+def _iso_utc(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+    return normalized.isoformat().replace("+00:00", "Z")
 
 class FixtureItem(BaseModel):
     id: str
@@ -89,7 +95,7 @@ async def list_fixtures(
         .offset((page - 1) * page_size).limit(page_size))).all()
     items = [FixtureItem(id=row.id, competition=row.competition, home_team=row.home,
              away_team=row.away, match_date=row.match_date,
-             kickoff_at=row.kickoff_at.isoformat() if row.kickoff_at else None,
+             kickoff_at=_iso_utc(row.kickoff_at),
              status=row.status, prediction_available=bool(row.prediction_available)) for row in rows]
     return FixturePage(items=items, page=page, page_size=page_size, total=total)
 
@@ -130,21 +136,21 @@ async def fixture_detail(
         "home_team": home_name,
         "away_team": away_name,
         "match_date": fixture.match_date.isoformat() if fixture.match_date else None,
-        "kickoff_at": fixture.kickoff_at.isoformat() if fixture.kickoff_at else None,
+        "kickoff_at": _iso_utc(fixture.kickoff_at),
         "status": fixture.status,
         "venue": fixture.venue,
         "result": ({"home_goals": result.home_goals, "away_goals": result.away_goals,
                     "source": result.source} if result else None),
         "prediction": ({
             "model_version": prediction.model_version,
-            "data_cutoff_at": prediction.data_cutoff_at.isoformat(),
-            "created_at": prediction.created_at.isoformat(),
+            "data_cutoff_at": _iso_utc(prediction.data_cutoff_at),
+            "created_at": _iso_utc(prediction.created_at),
             "probabilities": prediction.probabilities,
             "feature_snapshot": prediction.feature_snapshot,
         } if prediction else None),
         "odds": [{
             "provider": item.provider, "bookmaker": item.bookmaker, "market": item.market,
             "outcome": item.outcome, "decimal_odds": float(item.decimal_odds),
-            "observed_at": item.observed_at.isoformat(),
+            "observed_at": _iso_utc(item.observed_at),
         } for item in odds],
     }
