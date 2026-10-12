@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from app.prediction.backtest import walk_forward_backtest
 from app.prediction.dixon_coles import MatchObservation, ModelFitError, fit_dixon_coles, select_time_decay
 from app.prediction.poisson import derive_markets
 
@@ -62,8 +63,6 @@ def test_time_decay_is_selected_with_expanding_chronological_folds():
     assert selection.best_days in (180.0, 365.0)
     assert selection.folds_used >= 1
     assert set(selection.mean_log_loss_by_days) <= {180.0, 365.0}
-
-from app.prediction.backtest import walk_forward_backtest
 
 def test_walk_forward_backtest_reports_baselines_and_uncertainty():
     report = walk_forward_backtest(
