@@ -119,7 +119,10 @@ class MarketOdds(Base):
     outcome: Mapped[str] = mapped_column(String(120), nullable=False)
     decimal_odds: Mapped[Decimal] = mapped_column(Numeric(12, 5), nullable=False)
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    observed_at_precision: Mapped[str] = mapped_column(String(32), nullable=False, default="provider_timestamp")
     raw_payload_hash: Mapped[str | None] = mapped_column(String(64))
+    __table_args__ = (UniqueConstraint("fixture_id", "provider", "bookmaker", "market", "outcome", "observed_at",
+                                       name="uq_market_odds_snapshot"),)
 
 class Prediction(Base):
     __tablename__ = "predictions"
