@@ -15,6 +15,7 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - Grounded AI chat with an OpenAI Responses adapter, allowlisted read-only tools, bounded tool calls, numeric/date grounding checks, saved conversations and an hourly request limit.
 - Ticket manager with draft create/add/remove/archive, signed preview-confirm flow, session binding, required idempotency keys, audit revisions and CSV export; no wager placement.
 - Screenshot upload with PNG/JPEG/WEBP validation, immutable original storage, OCR candidate extraction, duplicate detection and manual review; OCR never writes odds or tickets.
+- Prediction history with paginated stored forecasts, post-match 1X2 evaluation, Brier/log-loss/accuracy summaries, strict pre-kickoff cutoff guards and idempotent evaluation requests.
 - PostgreSQL 18, backend and frontend Docker images; CI workflow includes lint, security/dependency checks, tests and container builds (runs have not yet been verified).
 
 The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
