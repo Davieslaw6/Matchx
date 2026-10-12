@@ -45,8 +45,8 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py312"
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
-ignore = ["I001", "E501"]
+select = ["E4", "E9", "F", "UP", "B"]
+ignore = ["UP038"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
