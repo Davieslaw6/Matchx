@@ -23,8 +23,13 @@ class Settings(BaseSettings):
         public_bind = self.host not in {"127.0.0.1", "::1", "localhost"}
         if public_bind and not self.owner_exists:
             raise RuntimeError("Refusing public-interface startup without an owner. Provision an owner first.")
-        if self.environment == "production" and self.session_secret.get_secret_value() == "development-only-change-me":
-            raise RuntimeError("SESSION_SECRET must be set to a strong secret in production.")
+        secret = self.session_secret.get_secret_value()
+        if self.environment == "production" and (
+            secret == "development-only-change-me"
+            or len(secret) < 32
+            or secret.startswith("replace-with-")
+        ):
+            raise RuntimeError("SESSION_SECRET must be a generated secret of at least 32 characters in production.")
 
 @lru_cache
 def get_settings() -> Settings:
