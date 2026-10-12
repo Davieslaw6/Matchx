@@ -17,6 +17,7 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - Screenshot upload with PNG/JPEG/WEBP validation, immutable original storage, OCR candidate extraction, duplicate detection and manual review; OCR never writes odds or tickets.
 - Prediction history with paginated stored forecasts, post-match 1X2 evaluation, Brier/log-loss/accuracy summaries, strict pre-kickoff cutoff guards and idempotent evaluation requests.
 - Booking-code capability endpoint/UI explicitly reports unavailable until a supported provider, credentials and terms review are in place; no codes are fabricated.
+- Read-only settings/status page reports database, owner, data-provider, AI, OCR and recent sync health without exposing secrets.
 - PostgreSQL 18, backend and frontend Docker images; CI workflow includes lint, security/dependency checks, tests and container builds (runs have not yet been verified).
 
 The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
