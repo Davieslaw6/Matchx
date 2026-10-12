@@ -12,7 +12,7 @@ from app.ai.tools import ToolRegistry
 from app.config import Settings
 
 SYSTEM_INSTRUCTIONS = """You are MATCH X, a private football analysis assistant.
-Use the allowlisted MATCH X data tools for current fixtures, results, form and stored predictions.
+Use the allowlisted MATCH X data tools for stored fixtures, results, form, predictions and observed odds snapshots.
 Never invent scores, dates, odds, injuries, probabilities, model performance or booking codes.
 If data is missing, ambiguous, stale or unsupported, say so explicitly. Distinguish historical facts
 from model estimates. Do not describe a selection as safe, sure or guaranteed, do not promise profit,
