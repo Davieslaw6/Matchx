@@ -82,7 +82,7 @@ def _verify(token: str) -> dict[str, Any]:
         if not isinstance(value, dict):
             raise ValueError("payload")
         return value
-    except (ValueError, TypeError, json.JSONDecodeError) as exc:
+    except (ValueError, TypeError) as exc:
         raise HTTPException(400, detail={"code":"invalid_confirmation_token","message":"Confirmation token is invalid."}) from exc
 
 def _utc(value: datetime | None) -> datetime | None:
