@@ -106,7 +106,8 @@ class FootballDataOrgProvider:
                                 pass
                     await asyncio.sleep(delay)
                     continue
-                response.raise_for_status()
+                if response.is_error:
+                    raise ProviderError(f"Provider returned HTTP {response.status_code}.")
                 payload = response.json()
                 if not isinstance(payload, dict):
                     raise ProviderError("Provider returned a non-object JSON payload.")
@@ -135,7 +136,14 @@ class FootballDataOrgProvider:
         except (ValidationError, TypeError) as exc:
             raise ProviderError("Invalid competition record in provider response.") from exc
 
+    @staticmethod
+    def _validate_path_id(value: str, field: str) -> str:
+        if not value or len(value) > 80 or not all(char.isalnum() or char in "-_" for char in value):
+            raise ValueError(f"Invalid {field}.")
+        return value
+
     async def teams(self, competition_id: str) -> list[dict[str, Any]]:
+        competition_id = self._validate_path_id(competition_id, "competition id")
         payload = await self._get(f"competitions/{competition_id}/teams")
         raw = payload.get("teams")
         if not isinstance(raw, list):
@@ -194,6 +202,7 @@ class FootballDataOrgProvider:
                 if m["status"] in {"finished", "awarded"}]
 
     async def standings(self, competition_id: str) -> list[dict[str, Any]]:
+        competition_id = self._validate_path_id(competition_id, "competition id")
         payload = await self._get(f"competitions/{competition_id}/standings")
         raw = payload.get("standings")
         if not isinstance(raw, list):
