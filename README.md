@@ -8,10 +8,13 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - SQLAlchemy 2 persistence models and Alembic migration environment.
 - Authenticated paginated fixture explorer API and mobile-responsive explorer page.
 - football-data.org v4 adapter for competitions, teams, fixtures/results and standings; unsupported capabilities are explicit.
-- football-data.co.uk CSV parser/import CLI for historical results and a provider sync service with audit records.
+- football-data.co.uk CSV parser/import CLI for historical results and validated historical 1X2 odds, with timestamp-precision metadata and idempotent snapshot upserts.
 - Unicode-normalized team resolver with RapidFuzz candidate scoring.
-- Initial pure Poisson scoreline-grid and derived market calculation package with invariant tests.
-- PostgreSQL 18 Compose service and CI workflow.
+- Independent Poisson scoreline grid, Dixon–Coles maximum-likelihood model, time-decay selection, chronological walk-forward backtests, calibration/market-baseline metrics and prediction generation CLI. Real-data fitting/backtest has not been executed.
+- Fixture analysis UI/API for stored predictions, expected goals, scorelines, odds snapshots and source provenance.
+- Grounded AI chat with an OpenAI Responses adapter, allowlisted read-only tools, bounded tool calls, numeric/date grounding checks, saved conversations and an hourly request limit.
+- Ticket manager with draft create/add/remove/archive, signed preview-confirm flow, session binding, required idempotency keys, audit revisions and CSV export; no wager placement.
+- PostgreSQL 18, backend and frontend Docker images; CI workflow includes lint, security/dependency checks, tests and container builds (runs have not yet been verified).
 
 The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
 
