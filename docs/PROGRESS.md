@@ -4,10 +4,10 @@
 - Working branch: build/match-x-foundation; main has not intentionally been modified. Draft PR: https://github.com/Davieslaw6/Matchx/pull/1.
 - Phase 2 repository implementation: SQLAlchemy 2 models, async Alembic environment and frozen explicit initial revision, CLI-only owner create/reset with Argon2id, opaque hashed sessions, CSRF checks, login throttling/lockout, standard API error envelopes, login UI and dashboard session guard.
 - Authenticated paginated fixture explorer API and responsive frontend explorer are wired; anonymous access is expected to return 401.
-- football-data.org v4 adapter, football-data.co.uk CSV result parser/import CLI, Unicode/RapidFuzz team resolver and provider sync service are implemented in the repository.
+- football-data.org v4 adapter, football-data.co.uk CSV results and historical 1X2 odds parser/import CLI, Unicode/RapidFuzz team resolver and provider sync service are implemented in the repository.
 - Prediction code includes M0 Poisson calculations, M1 Dixon-Coles fitting, expanding-window decay selection, walk-forward evaluation/reporting, and a CLI that registers models and stores pre-kickoff predictions with data cutoffs and feature snapshots.
 - Added unit/integration tests for auth/CSRF, schema contract, CSV parsing/import idempotency, provider payload validation/sync idempotency, team resolution and Dixon-Coles probability/cutoff invariants.
-- Frontend dependency ranges updated to Next.js 16.4, React 19.3, TypeScript 7, Node 24 CI; ADR 0004 records rationale.
+- Frontend dependency ranges updated to Next.js 16.4, React 19.3, TypeScript 7, Node 24 CI; PostgreSQL 18 Compose, multi-stage backend/frontend images and ADR 0004 are added.
 - Added TEST_REPORT.md and MODEL_REPORT.md with explicit NOT RUN / NOT GENERATED status.
 - UNVERIFIED: no local test/build/migration execution, no confirmed CI run, no live provider request and no real historical model backtest. Do not treat the branch as production-ready.
 
@@ -22,7 +22,7 @@
 | 5 AI chat | Partial implementation | OpenAI Responses provider, allowlisted read-only data tools, bounded tool loop, numeric grounding check/retry/fallback and conversation UI added; live API key absent and tests unexecuted. |
 | 6 Analysis/odds | Partial implementation | Fixture analysis UI/API shows stored predictions and odds observation precision; football-data.co.uk historical 1X2 odds are imported idempotently. Live odds provider, full odds market coverage and live freshness workflow remain. |
 | 7 Tickets | Partial implementation | Draft create/add/remove/archive, signed two-minute confirmation, session binding, CSRF, required Idempotency-Key, revision history and CSV export. No split/optimizer, multiple export formats or wager placement. |
-| 8 Screenshot import | Model only | No secure upload pipeline. |
+| 8 Screenshot import | Partial implementation | Validated image upload, immutable originals, SHA-256 deduplication, Tesseract OCR, conservative candidate extraction and explicit review/reject workflow. No automatic odds/ticket writes; screenshot-to-market linking remains. |
 | 9 Booking codes | Models only | No integration state machine or real integrations. |
 | 10 History/settings | Models added | No evaluation/retention/export workflow. |
 | 11 Hardening | Not started | Audits and E2E are configured but unexecuted. |
@@ -30,7 +30,7 @@
 
 ## Immediate next actions
 1. Obtain actual CI run results for draft PR #1 and fix all failures.
-2. Execute Alembic upgrade/downgrade/check against PostgreSQL 16 to validate the frozen migration.
+2. Execute Alembic upgrade/downgrade/check against PostgreSQL 18 to validate the frozen migration.
 3. Persist raw provider payloads, add quota/TTL caching, improve cross-provider canonical fixture identity and schedule idempotent jobs.
 4. Import sufficient historical results, run the walk-forward CLI and review a data-backed model report.
 5. Continue analysis/odds, tickets, AI, screenshot, booking-code, settings and deployment phases.
