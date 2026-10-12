@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import type { ChangeEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -20,7 +20,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadConversations() {
+  const loadConversations = useCallback(async () => {
     const response = await fetch("/api/v1/ai/conversations", { credentials: "same-origin" });
     if (response.status === 401) {
       router.replace("/login");
@@ -29,7 +29,7 @@ export default function ChatPage() {
     if (!response.ok) return;
     const data = (await response.json()) as { items: Conversation[] };
     setConversations(data.items);
-  }
+  }, [router]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -49,7 +49,7 @@ export default function ChatPage() {
         if (cause instanceof Error && cause.name !== "AbortError") setError(cause.message);
       });
     return () => controller.abort();
-  }, [router]);
+  }, [loadConversations, router]);
 
   async function openConversation(id: string) {
     setError("");
