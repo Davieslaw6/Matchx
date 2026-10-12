@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-matchx}
+      POSTGRES_USER: ${POSTGRES_USER:-matchx}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - matchx_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-matchx} -d ${POSTGRES_DB:-matchx}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  matchx_postgres_data:
