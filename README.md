@@ -51,4 +51,4 @@ From frontend/: npm run lint, npm run typecheck, npm run test, and npm run build
 These commands have not been executed in the authoring environment. Consult docs/VERIFICATION_LOG.md.
 
 ## Current limitations
-The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and raw provider bytes are not yet retained. Cross-provider canonical fixture resolution is conservative. Dixon–Coles fitting/backtesting, AI orchestration, odds ingestion, ticket mutation confirmation, secure screenshot import, booking-code integration, deployment/restore automation and full security audits remain incomplete.
+The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and quota/TTL caching is absent. Raw football-data.org JSON is retained during sync. Cross-provider canonical fixture resolution is conservative. Dixon–Coles fitting/backtesting, AI orchestration, odds ingestion, ticket mutation confirmation, secure screenshot import, booking-code integration, deployment/restore automation and full security audits remain incomplete.
