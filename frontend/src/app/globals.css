@@ -244,3 +244,8 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .history-pagination span { color: var(--muted); font-size: 11px; }
 @media (max-width: 850px) { .history-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .history-toolbar, .history-result-row { align-items: stretch; flex-direction: column; } .history-toolbar button { align-self: start; } .history-summary { grid-template-columns: 1fr; } .history-item-header { flex-direction: column; } .history-probabilities span { flex-direction: column; } }
+
+.booking-unavailable { max-width: 760px; margin: 24px auto; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.booking-unavailable h2 { margin: 10px 0; font-size: 20px; }
+.booking-unavailable p, .booking-unavailable li { margin: 10px 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.booking-unavailable ul { padding-left: 20px; }
