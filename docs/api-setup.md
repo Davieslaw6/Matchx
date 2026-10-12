@@ -19,6 +19,16 @@ The competition code and season label are provenance supplied by the operator. T
 
 Current importer limitations: cross-provider canonical duplicate resolution is conservative and relies on identical canonical team identities; historical 1X2 odds triplets from supported football-data.co.uk columns are imported idempotently with timestamp-precision metadata. Date-only closing odds are excluded from market backtests; live odds-provider ingestion remains absent. The football-data.org sync stores the raw JSON response and content hash in provider_raw_payloads before strict normalization; this hook is active for the sync service, not arbitrary direct adapter calls.
 
+## Historical CSV odds import
+
+Run from backend/ after downloading a licensed football-data.co.uk CSV:
+
+    python -m app.sports.csv_import path/to/E0.csv --competition-code E0 --season 2025-2026
+
+The importer accepts complete decimal 1X2 triplets for Bet365 (B365H/D/A), Bet&Win (BWH/D/A), Interwetten (IWH/D/A), Ladbrokes (LBH/D/A), Pinnacle (PSH/D/A), William Hill (WHH/D/A), VC Bet (VCH/D/A), Gamebookers (GBH/D/A), Sportingbet (SBH/D/A), and market average (AvgH/D/A). Odds at or below 1.0, malformed prices and incomplete triplets are rejected with counts; missing odds are never filled in. Re-imports update the same snapshot instead of duplicating it.
+
+When the CSV supplies a kickoff time, odds are labelled `closing_at_kickoff`; when it is date-only, the importer stores an end-of-day UTC chronology convention labelled `date_only_closing`. The exact observation timestamp is not known for date-only rows, and those rows are excluded from the closing-market backtest. This is historical data, not a live odds feed.
+
 ## LLM configuration
 The OpenAI Responses adapter, allowlisted read-only data tools, bounded tool loop, numeric/date grounding check, one regeneration attempt, fallback, and conversation persistence are implemented. Set LLM_API_KEY and LLM_MODEL in backend/.env; LLM_BASE_URL defaults to https://api.openai.com/v1. The live API is not configured or tested. OCR, news and provider responses are untrusted data. The LLM has no ticket mutation or wager-placement tools.
 
