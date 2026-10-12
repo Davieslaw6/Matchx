@@ -3,7 +3,6 @@ import pytest
 import respx
 
 from app.sports.football_data_org import FootballDataOrgProvider, ProviderError
-from app.sports.provider import Unsupported
 
 @pytest.mark.asyncio
 async def test_competitions_are_normalized_from_provider_payload():
