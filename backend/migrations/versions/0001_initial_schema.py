@@ -144,6 +144,7 @@ def upgrade() -> None:
         sa.Column("feature_snapshot", sa.JSON(), nullable=False),
         sa.Column("supersedes_id", sa.String(36), sa.ForeignKey("predictions.id"), nullable=True),
         sa.Column("status", sa.String(24), nullable=False),
+        sa.UniqueConstraint("fixture_id", "model_version", name="uq_prediction_fixture_model"),
     )
     op.create_index("ix_predictions_fixture_id", "predictions", ["fixture_id"])
     op.create_table(
