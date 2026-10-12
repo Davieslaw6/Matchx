@@ -14,5 +14,5 @@ Only executed operations are listed. GitHub file-write success confirms that rep
 - Checked workflow runs via the available commit-associated query; it returned no runs. This is not proof that no workflow exists, only that no run was returned by that query. No CI result has been confirmed.
 - Replaced the initial metadata-driven migration with explicit create/drop operations so the historical revision no longer changes with future model edits. Migration upgrade/downgrade/drift checks remain NOT RUN.
 - NOT RUN: Python compile/import, dependency installation, Ruff, Bandit, pip-audit, Alembic upgrade/downgrade/check, PostgreSQL/SQLite integration execution, npm install, ESLint, TypeScript check, Vitest, production build, npm audit, live provider calls or model backtests.
-- Known implementation gaps: raw provider bytes are not persisted; quota/TTL cache and scheduled jobs are absent; cross-provider canonical fixture identity is conservative; real historical backtest/report results and analysis/odds/ticket/AI/screenshot/booking integrations remain incomplete.
+- Known implementation gaps: quota/TTL cache and scheduled jobs are absent; cross-provider canonical fixture identity is conservative; real historical backtest/report results and analysis/odds/ticket/AI/screenshot/booking integrations remain incomplete.
 - No tests are represented as passing.
