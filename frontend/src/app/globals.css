@@ -218,3 +218,29 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .screenshot-review label { font-size: 11px; color: var(--muted); }
 .screenshot-review textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--text); font: inherit; font-size: 12px; }
 @media (max-width: 760px) { .screenshot-layout { grid-template-columns: 1fr; } .screenshot-list { order: 2; } .screenshot-detail { order: 1; } .screenshot-upload { grid-template-columns: 1fr; } .screenshot-upload button { grid-column: auto; grid-row: auto; } .screenshot-detail-header { flex-direction: column; } }
+
+.history-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0; }
+.history-toolbar h2 { font-size: 15px; }
+.history-toolbar p { margin-top: 5px; color: var(--muted); font-size: 11px; }
+.history-toolbar button { padding: 10px 13px; border: 0; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.history-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.history-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0 20px; }
+.history-summary > div { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.history-summary span { color: var(--muted); font-size: 10px; }
+.history-summary strong { font-size: 18px; overflow-wrap: anywhere; }
+.history-list { display: grid; gap: 12px; }
+.history-item { padding: 17px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.history-item-header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.history-item-header h2 { margin: 7px 0; font-size: 16px; }
+.status-pill { flex-shrink: 0; padding: 5px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 9px; }
+.status-pill.evaluated { color: var(--accent); }
+.history-probabilities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.history-probabilities span { display: flex; justify-content: space-between; gap: 8px; padding: 9px; border-radius: 8px; background: var(--background); color: var(--muted); font-size: 10px; }
+.history-probabilities strong { color: var(--text); }
+.history-result-row { display: flex; justify-content: space-between; gap: 12px; margin: 10px 0; font-size: 11px; }
+.history-result-row span:last-child { text-align: right; }
+.history-item .provenance { margin: 9px 0; }
+.history-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 0; }
+.history-pagination span { color: var(--muted); font-size: 11px; }
+@media (max-width: 850px) { .history-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .history-toolbar, .history-result-row { align-items: stretch; flex-direction: column; } .history-toolbar button { align-self: start; } .history-summary { grid-template-columns: 1fr; } .history-item-header { flex-direction: column; } .history-probabilities span { flex-direction: column; } }
