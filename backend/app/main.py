@@ -10,6 +10,7 @@ from app.ai.routes import router as ai_router
 from app.history.routes import router as history_router
 from app.imports.routes import router as screenshot_imports_router
 from app.auth import router as auth_router
+from app.booking_codes.routes import router as booking_codes_router
 from app.config import get_settings
 from app.db import engine, SessionLocal
 from app.models import OwnerAccount
@@ -36,6 +37,7 @@ app = FastAPI(title="MATCH X API", version="0.2.0",
               docs_url="/docs" if settings.environment != "production" else None, redoc_url=None,
               lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(booking_codes_router)
 app.include_router(ai_router)
 app.include_router(screenshot_imports_router)
 app.include_router(history_router)
