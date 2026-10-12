@@ -9,7 +9,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from app.models import Competition, Fixture, MatchResult, Prediction, Team, TeamAlias
+from app.models import Competition, Fixture, MarketOdds, MatchResult, Prediction, Team, TeamAlias
 from app.sports.team_resolver import TeamResolver
 
 class StrictArgs(BaseModel):
@@ -106,6 +106,8 @@ async def _fixture_analysis(args: FixtureAnalysisArgs, db: AsyncSession) -> dict
         Prediction.fixture_id == fixture.id, Prediction.status == "live"
     ).order_by(Prediction.created_at.desc()).limit(1))
     result = await db.scalar(select(MatchResult).where(MatchResult.fixture_id == fixture.id))
+    odds = (await db.scalars(select(MarketOdds).where(MarketOdds.fixture_id == fixture.id)
+        .order_by(MarketOdds.observed_at.desc()).limit(30))).all()
     return {
         "status": "ok", "source": "MATCH X database", "fixture_id": fixture.id,
         "competition": competition, "home_team": home_name, "away_team": away_name,
@@ -120,7 +122,14 @@ async def _fixture_analysis(args: FixtureAnalysisArgs, db: AsyncSession) -> dict
             "probabilities": prediction.probabilities,
             "features": prediction.feature_snapshot,
         } if prediction else None),
-        "limitations": [] if prediction else ["No stored prediction is available for this fixture."],
+        "odds_snapshots": [{
+            "provider": item.provider, "bookmaker": item.bookmaker, "market": item.market,
+            "outcome": item.outcome, "decimal_odds": float(item.decimal_odds),
+            "observed_at": item.observed_at.isoformat(),
+            "observed_at_precision": item.observed_at_precision,
+        } for item in odds],
+        "limitations": (["No stored prediction is available for this fixture."] if not prediction else [])
+            + (["No odds snapshots are available for this fixture."] if not odds else []),
     }
 
 async def _team_form(args: TeamFormArgs, db: AsyncSession) -> dict[str, Any]:
