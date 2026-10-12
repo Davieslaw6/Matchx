@@ -132,6 +132,7 @@ class Prediction(Base):
     feature_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     supersedes_id: Mapped[str | None] = mapped_column(ForeignKey("predictions.id"))
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="live")
+    __table_args__ = (UniqueConstraint("fixture_id", "model_version", name="uq_prediction_fixture_model"),)
 
 class PredictionEvaluation(Base):
     __tablename__ = "prediction_evaluations"
