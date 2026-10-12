@@ -1,5 +1,7 @@
 """Strict parser for football-data.co.uk historical results CSV files."""
 import csv
+import hashlib
+from decimal import Decimal, InvalidOperation
 from datetime import date, datetime, time, timezone
 from io import StringIO
 from typing import Any
@@ -9,6 +11,12 @@ class CsvImportError(ValueError):
     pass
 
 _REQUIRED = {"Div", "Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"}
+_ODDS_COLUMNS = (
+    ("B365", "Bet365"), ("BW", "Bet&Win"), ("IW", "Interwetten"),
+    ("LB", "Ladbrokes"), ("PS", "Pinnacle"), ("WH", "William Hill"),
+    ("VC", "VC Bet"), ("GB", "Gamebookers"), ("SB", "Sportingbet"),
+    ("Avg", "Market average"),
+)
 
 def _parse_date(raw: str) -> date:
     for fmt in ("%d/%m/%y", "%d/%m/%Y", "%Y-%m-%d"):
@@ -63,6 +71,29 @@ def parse_results_csv(content: bytes, *, competition_code: str | None = None) ->
         actual_result = (row.get("FTR") or "").strip().upper()
         if actual_result != expected_result:
             raise CsvImportError(f"FTR conflicts with score at line {line_number}.")
+        odds = []
+        odds_rejected = []
+        odds_hash_rows = []
+        for prefix, bookmaker in _ODDS_COLUMNS:
+            columns = (f"{prefix}H", f"{prefix}D", f"{prefix}A")
+            if not any(name in headers for name in columns):
+                continue
+            raw_odds = [(row.get(name) or "").strip() for name in columns]
+            if not any(raw_odds):
+                continue
+            if not all(raw_odds):
+                odds_rejected.append({"bookmaker": bookmaker, "reason": "incomplete_triplet"})
+                continue
+            try:
+                prices = tuple(Decimal(value) for value in raw_odds)
+                if any(not price.is_finite() or price <= Decimal("1") for price in prices):
+                    raise InvalidOperation
+            except (InvalidOperation, ValueError):
+                odds_rejected.append({"bookmaker": bookmaker, "reason": "invalid_decimal_odds"})
+                continue
+            odds.append({"bookmaker": bookmaker, "home": prices[0], "draw": prices[1], "away": prices[2]})
+            odds_hash_rows.append(f"{bookmaker}|{'|'.join(raw_odds)}")
+        raw_hash = hashlib.sha256("\n".join(odds_hash_rows).encode("utf-8")).hexdigest() if odds_hash_rows else None
         records.append({
             "provider": "football-data.co.uk",
             "provider_fixture_id": f"{division}:{match_date.isoformat()}:{home}:{away}",
@@ -76,5 +107,8 @@ def parse_results_csv(content: bytes, *, competition_code: str | None = None) ->
             "away_goals": away_goals,
             "result": expected_result,
             "source_line": line_number,
+            "odds": odds,
+            "odds_rejected": odds_rejected,
+            "odds_raw_hash": raw_hash,
         })
     return records
