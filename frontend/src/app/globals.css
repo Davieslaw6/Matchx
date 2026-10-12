@@ -249,3 +249,23 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .booking-unavailable h2 { margin: 10px 0; font-size: 20px; }
 .booking-unavailable p, .booking-unavailable li { margin: 10px 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .booking-unavailable ul { padding-left: 20px; }
+
+.settings-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:18px 0; }
+.settings-summary article { display:grid; gap:8px; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+.settings-summary span,.settings-panel>p { color:var(--muted); font-size:10px; }
+.settings-summary strong { font-size:13px; overflow-wrap:anywhere; }
+.settings-sections { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.settings-panel { min-width:0; padding:18px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+.settings-panel h2 { margin-bottom:14px; font-size:15px; }
+.settings-panel>div { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.settings-panel>div span { color:var(--muted); }
+.settings-panel>div strong { text-align:right; overflow-wrap:anywhere; }
+.settings-panel>p { margin-top:14px; line-height:1.6; }
+.settings-panel .text-link { display:inline-block; margin-top:12px; }
+.settings-syncs { margin-top:14px; }
+.settings-syncs article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px 12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.settings-syncs article div { display:grid; gap:5px; }
+.settings-syncs article span { color:var(--muted); }
+.settings-syncs article p { grid-column:1 / -1; color:var(--muted); }
+@media (max-width:850px) { .settings-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .settings-sections { grid-template-columns:1fr; } }
+@media (max-width:520px) { .settings-summary { grid-template-columns:1fr; } .settings-panel>div { flex-direction:column; } .settings-panel>div strong { text-align:left; } }
