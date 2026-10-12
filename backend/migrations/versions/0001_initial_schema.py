@@ -155,6 +155,7 @@ def upgrade() -> None:
         sa.Column("prediction_id", sa.String(36), sa.ForeignKey("predictions.id", ondelete="CASCADE"), nullable=False),
         sa.Column("evaluated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("metrics", sa.JSON(), nullable=False),
+        sa.UniqueConstraint("prediction_id", name="uq_prediction_evaluation"),
     )
     op.create_index("ix_prediction_evaluations_prediction_id", "prediction_evaluations", ["prediction_id"])
     op.create_table(
