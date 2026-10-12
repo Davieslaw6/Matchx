@@ -9,7 +9,7 @@ def sample_matches():
     start = datetime(2024, 1, 1, tzinfo=timezone.utc)
     teams = [f"Team {i}" for i in range(6)]
     matches = []
-    for index in range(90):
+    for index in range(160):
         home = teams[index % len(teams)]
         away = teams[(index * 5 + 1) % len(teams)]
         matches.append(MatchObservation(
@@ -62,3 +62,20 @@ def test_time_decay_is_selected_with_expanding_chronological_folds():
     assert selection.best_days in (180.0, 365.0)
     assert selection.folds_used >= 1
     assert set(selection.mean_log_loss_by_days) <= {180.0, 365.0}
+
+from app.prediction.backtest import walk_forward_backtest
+
+def test_walk_forward_backtest_reports_baselines_and_uncertainty():
+    report = walk_forward_backtest(
+        sample_matches(),
+        data_cutoff=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        initial_train_matches=100,
+        test_window_matches=20,
+        tune_time_decay=False,
+        bootstrap_replicates=50,
+    )
+    assert report["status"] == "completed"
+    assert report["metrics"]["m1_dixon_coles"]["sample_size"] > 0
+    assert report["metrics"]["m0_poisson"]["sample_size"] == report["metrics"]["m1_dixon_coles"]["sample_size"]
+    assert "m1_minus_m0_poisson_log_loss" in report["comparisons"]
+    assert len(report["metrics"]["m1_dixon_coles"]["log_loss_ci95"]) == 2
