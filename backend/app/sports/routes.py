@@ -153,5 +153,6 @@ async def fixture_detail(
             "provider": item.provider, "bookmaker": item.bookmaker, "market": item.market,
             "outcome": item.outcome, "decimal_odds": float(item.decimal_odds),
             "observed_at": _iso_utc(item.observed_at),
+            "observed_at_precision": item.observed_at_precision,
         } for item in odds],
     }
