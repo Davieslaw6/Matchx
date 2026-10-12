@@ -25,13 +25,13 @@ export default function HistoryPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const loadHistory = useCallback(async (requestedPage = page) => {
+  const loadHistory = useCallback(async (requestedPage = 1) => {
     const response = await fetch(`/api/v1/history?page=${requestedPage}&page_size=20`, { credentials: "same-origin" });
     if (response.status === 401) { router.replace("/login"); return; }
     const body = (await response.json()) as { items?: HistoryItem[]; summary?: Summary; total?: number; message?: string };
     if (!response.ok) throw new Error(body.message || "Could not load prediction history.");
     setItems(body.items ?? []); setSummary(body.summary ?? null); setTotal(body.total ?? 0); setPage(requestedPage);
-  }, [page, router]);
+  }, [router]);
 
   useEffect(() => {
     const controller = new AbortController();
