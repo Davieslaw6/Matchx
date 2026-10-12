@@ -1,7 +1,7 @@
 """CLI import for locally downloaded football-data.co.uk result CSV files."""
 import argparse
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import SessionLocal
-from app.models import Competition, DataSyncRun, Fixture, MatchResult, Team
+from app.models import Competition, DataSyncRun, Fixture, MarketOdds, MatchResult, Team
 from app.sports.football_data_csv import parse_results_csv
 from app.sports.team_resolver import normalize_team_name
 
@@ -28,12 +28,45 @@ async def _get_or_create_team(db: AsyncSession, name: str) -> Team:
     await db.flush()
     return team
 
+async def _upsert_odds(db: AsyncSession, fixture: Fixture, record: dict[str, Any], counts: dict[str, int]) -> None:
+    odds = record.get("odds", [])
+    counts["odds_rejected"] += len(record.get("odds_rejected", []))
+    if not odds:
+        return
+    exact_kickoff = record["kickoff_at"]
+    observed_at = exact_kickoff or datetime.combine(record["match_date"], time.max, tzinfo=timezone.utc)
+    precision = "closing_at_kickoff" if exact_kickoff else "date_only_closing"
+    for item in odds:
+        for outcome, price in (("home", item["home"]), ("draw", item["draw"]), ("away", item["away"])):
+            existing = await db.scalar(select(MarketOdds).where(
+                MarketOdds.fixture_id == fixture.id,
+                MarketOdds.provider == "football-data.co.uk",
+                MarketOdds.bookmaker == item["bookmaker"],
+                MarketOdds.market == "1X2",
+                MarketOdds.outcome == outcome,
+                MarketOdds.observed_at == observed_at,
+            ))
+            if existing:
+                existing.decimal_odds = price
+                existing.observed_at_precision = precision
+                existing.raw_payload_hash = record.get("odds_raw_hash")
+                counts["odds_updated"] += 1
+            else:
+                db.add(MarketOdds(
+                    fixture_id=fixture.id, provider="football-data.co.uk",
+                    bookmaker=item["bookmaker"], market="1X2", outcome=outcome,
+                    decimal_odds=price, observed_at=observed_at,
+                    observed_at_precision=precision, raw_payload_hash=record.get("odds_raw_hash"),
+                ))
+                counts["odds_inserted"] += 1
+
 async def import_results_csv(content: bytes, *, competition_code: str | None = None,
                              season: str | None = None, filename: str = "uploaded.csv",
                              db: AsyncSession) -> dict[str, Any]:
     run = DataSyncRun(job_name="csv_result_import", provider="football-data.co.uk",
                       status="running", counts={"rows_read": 0, "inserted": 0,
-                      "updated": 0, "duplicates": 0, "rejected": 0})
+                      "updated": 0, "duplicates": 0, "rejected": 0,
+                      "odds_inserted": 0, "odds_updated": 0, "odds_rejected": 0})
     db.add(run)
     await db.flush()
     try:
@@ -100,15 +133,15 @@ async def import_results_csv(content: bytes, *, competition_code: str | None = N
                     else:
                         db.add(MatchResult(fixture_id=fixture.id, home_goals=record["home_goals"],
                             away_goals=record["away_goals"], source="football-data.co.uk"))
-                    continue
-                fixture = Fixture(provider=record["provider"],
-                    provider_fixture_id=record["provider_fixture_id"],
-                    competition_id=competition.id, home_team_id=home.id, away_team_id=away.id,
-                    match_date=record["match_date"], kickoff_at=record["kickoff_at"],
-                    status="finished", season=season)
-                db.add(fixture)
-                await db.flush()
-                counts["inserted"] += 1
+                else:
+                    fixture = Fixture(provider=record["provider"],
+                        provider_fixture_id=record["provider_fixture_id"],
+                        competition_id=competition.id, home_team_id=home.id, away_team_id=away.id,
+                        match_date=record["match_date"], kickoff_at=record["kickoff_at"],
+                        status="finished", season=season)
+                    db.add(fixture)
+                    await db.flush()
+                    counts["inserted"] += 1
             result = await db.scalar(select(MatchResult).where(MatchResult.fixture_id == fixture.id))
             if result:
                 result.home_goals = record["home_goals"]
@@ -117,6 +150,7 @@ async def import_results_csv(content: bytes, *, competition_code: str | None = N
             else:
                 db.add(MatchResult(fixture_id=fixture.id, home_goals=record["home_goals"],
                     away_goals=record["away_goals"], source="football-data.co.uk"))
+            await _upsert_odds(db, fixture, record, counts)
         run.counts = counts
         run.status = "succeeded"
         run.finished_at = datetime.now(timezone.utc)
