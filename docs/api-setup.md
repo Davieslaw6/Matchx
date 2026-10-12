@@ -1,17 +1,26 @@
 # Sports data and LLM setup
 
-## Current status
-Provider adapters and LLM orchestration are not implemented yet. No live provider behaviour has been verified. Do not add API keys to frontend variables or commit them.
+## Implemented adapter status
+- football-data.org v4 adapter: implemented for competition/team listing, fixture/result date-range retrieval and standings. It requires a server-side API token, validates payload shapes, uses bounded retries with Retry-After support, and applies a short circuit-breaker cooldown after repeated transport failures.
+- football-data.co.uk CSV parser and CLI import: implemented for historical final scores. Import validates required columns and score/result consistency, stores a sync-run audit record, and is idempotent for provider fixture IDs.
+- Team-name resolver: Unicode normalization, explicit aliases, RapidFuzz candidate scoring, and ambiguous/unmatched outcomes.
 
-## Planned sports-data providers
-- football-data.org: use its official API and check the current competition coverage, rate limits, terms and data licence before enabling it.
-- football-data.co.uk: historical CSV import for results and odds; review the current site's data-use terms and source attribution requirements before redistributing imported data.
-- Optional API-Football adapter: only after current coverage, quota and licence terms are checked.
+## Configure football-data.org
+Set PROVIDER_API_KEY in backend/.env. Never expose it as a NEXT_PUBLIC_* variable or commit the value. Use the provider's current official documentation to verify the account's available competitions, endpoints, rate limits and terms before enabling scheduled sync. The adapter has not been tested against a live provider in this build.
 
-The application will store raw provider payloads with hashes, validate records before normalisation, track sync runs and enforce configurable request budgets. Unsupported provider capabilities must be returned explicitly, not represented as empty successful data.
+The adapter explicitly reports odds, xG, injuries, cards, corners, H2H and news as unsupported where no verified implementation exists. Do not interpret an unsupported capability as an empty successful response.
+
+## Import historical CSV results
+Download a CSV from football-data.co.uk according to that site's current terms, then from the backend directory run:
+
+    python -m app.sports.csv_import path/to/results.csv --competition-code E0 --season 2025-2026
+
+The competition code and season label are provenance supplied by the operator. The importer does not infer a competition's display name from the code. CSV rows without a Time value retain their match date but have no kickoff timestamp; the importer does not fabricate one. Do not use date-only records for pre-kickoff prediction timing or live market staleness calculations.
+
+Current importer limitations: cross-provider canonical duplicate resolution is conservative and relies on identical canonical team identities; raw source bytes are not yet retained in the provider_raw_payloads table; CSV odds are not imported. These are open implementation items.
 
 ## LLM configuration
-A server-side provider abstraction is planned. API keys must be environment variables or secret-manager values available only to the backend. OCR, news and provider responses are untrusted data. The LLM cannot run code or mutate tickets without an explicit confirmation request from the UI.
+LLM provider abstraction and tool orchestration are not implemented yet. Future API keys must remain server-side in environment variables or a secret manager. OCR, news and provider responses are untrusted data. The LLM must not run code or mutate tickets without an explicit confirmation request from the UI.
 
 ## UNVERIFIED
-Current API coverage, rate limits, prices, quotas, provider licence interpretation and live connectivity have not been verified in this build.
+No live provider requests, current rate-limit checks, live coverage/licence review, external data import or end-to-end sync has been run in this build. Confirm terms, attribution and quota against the provider's current official documentation before use.
