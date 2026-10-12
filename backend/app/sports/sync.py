@@ -5,7 +5,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Competition, DataSyncRun, Fixture, MatchResult, Team
+from app.db import SessionLocal
+from app.models import Competition, DataSyncRun, Fixture, MatchResult, ProviderRawPayload, Team
 from app.sports.provider import SportsDataProvider
 
 async def sync_provider_window(provider: SportsDataProvider, start: date, end: date,
@@ -18,6 +19,17 @@ async def sync_provider_window(provider: SportsDataProvider, start: date, end: d
         "results_inserted": 0, "results_updated": 0, "invalid_scores": 0,
     }
     try:
+        sink_setter = getattr(provider, "set_raw_payload_sink", None)
+        if sink_setter is not None:
+            async def persist_raw_payload(item: dict[str, Any]) -> None:
+                async with SessionLocal() as raw_db:
+                    raw_db.add(ProviderRawPayload(
+                        provider=item["provider"], data_type=item["data_type"],
+                        content_hash=item["content_hash"], payload=item["payload"],
+                        fetched_at=item["fetched_at"],
+                    ))
+                    await raw_db.commit()
+            sink_setter(persist_raw_payload)
         fixtures = await provider.fixtures(start, end, competition_code)
         results = await provider.results(start, end, competition_code)
         incoming = {record["provider_fixture_id"]: record for record in fixtures + results}
