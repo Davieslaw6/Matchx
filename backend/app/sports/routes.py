@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 
 from app.auth import require_owner
 from app.db import get_db
-from app.models import Competition, Fixture, Prediction, Team, Session
+from app.models import Competition, Fixture, MarketOdds, MatchResult, Prediction, Team, Session
 
 router = APIRouter(prefix="/api/v1/fixtures", tags=["fixtures"])
 
@@ -92,3 +92,59 @@ async def list_fixtures(
              kickoff_at=row.kickoff_at.isoformat() if row.kickoff_at else None,
              status=row.status, prediction_available=bool(row.prediction_available)) for row in rows]
     return FixturePage(items=items, page=page, page_size=page_size, total=total)
+
+
+@router.get("/{fixture_id}")
+async def fixture_detail(
+    fixture_id: str,
+    _: Session = Depends(require_owner),
+    db: AsyncSession = Depends(get_db),
+):
+    home = aliased(Team)
+    away = aliased(Team)
+    row = (await db.execute(
+        select(Fixture, Competition.name.label("competition"), home.name.label("home"),
+               away.name.label("away"))
+        .join(Competition, Fixture.competition_id == Competition.id)
+        .join(home, Fixture.home_team_id == home.id)
+        .join(away, Fixture.away_team_id == away.id)
+        .where(Fixture.id == fixture_id)
+    )).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail={
+            "code": "fixture_not_found", "message": "Fixture not found."
+        })
+    fixture, competition_name, home_name, away_name = row
+    prediction = await db.scalar(
+        select(Prediction).where(Prediction.fixture_id == fixture.id, Prediction.status == "live")
+        .order_by(Prediction.created_at.desc()).limit(1)
+    )
+    result = await db.scalar(select(MatchResult).where(MatchResult.fixture_id == fixture.id))
+    odds = (await db.scalars(
+        select(MarketOdds).where(MarketOdds.fixture_id == fixture.id)
+        .order_by(MarketOdds.observed_at.desc()).limit(50)
+    )).all()
+    return {
+        "id": fixture.id,
+        "competition": competition_name,
+        "home_team": home_name,
+        "away_team": away_name,
+        "match_date": fixture.match_date.isoformat() if fixture.match_date else None,
+        "kickoff_at": fixture.kickoff_at.isoformat() if fixture.kickoff_at else None,
+        "status": fixture.status,
+        "venue": fixture.venue,
+        "result": ({"home_goals": result.home_goals, "away_goals": result.away_goals,
+                    "source": result.source} if result else None),
+        "prediction": ({
+            "model_version": prediction.model_version,
+            "data_cutoff_at": prediction.data_cutoff_at.isoformat(),
+            "created_at": prediction.created_at.isoformat(),
+            "probabilities": prediction.probabilities,
+            "feature_snapshot": prediction.feature_snapshot,
+        } if prediction else None),
+        "odds": [{
+            "provider": item.provider, "bookmaker": item.bookmaker, "market": item.market,
+            "outcome": item.outcome, "decimal_odds": float(item.decimal_odds),
+            "observed_at": item.observed_at.isoformat(),
+        } for item in odds],
+    }
