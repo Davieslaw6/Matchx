@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from uuid import uuid4
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import structlog
@@ -39,6 +40,7 @@ app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allo
 @app.middleware("http")
 async def security_and_request_id(request: Request, call_next):
     request_id = request.headers.get("X-Request-ID", str(uuid4()))
+    request.state.request_id = request_id
     try:
         response = await call_next(request)
     except Exception:
@@ -70,3 +72,31 @@ async def readiness():
 @app.get("/api/v1/health", tags=["health"])
 async def health():
     return {"status":"ok", "service":"match-x-api", "readiness":"check /api/v1/health/ready"}
+
+@app.exception_handler(HTTPException)
+async def http_error(request: Request, exc: HTTPException):
+    detail = exc.detail if isinstance(exc.detail, dict) else {}
+    return JSONResponse(status_code=exc.status_code, headers=exc.headers, content={
+        "code": detail.get("code", "request_error"),
+        "message": detail.get("message", str(exc.detail) if isinstance(exc.detail, str) else "The request could not be completed."),
+        "details": None,
+        "request_id": getattr(request.state, "request_id", None),
+    })
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    errors = [{"location": list(error.get("loc", ())), "message": error.get("msg", "Invalid value"),
+               "type": error.get("type", "value_error")} for error in exc.errors()]
+    return JSONResponse(status_code=422, content={
+        "code": "validation_error", "message": "Request validation failed.",
+        "details": errors, "request_id": getattr(request.state, "request_id", None),
+    })
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, exc: Exception):
+    log.exception("unhandled_request_error", request_id=getattr(request.state, "request_id", None),
+                  path=request.url.path, error_type=type(exc).__name__)
+    return JSONResponse(status_code=500, content={
+        "code": "internal_error", "message": "An internal error occurred.",
+        "details": None, "request_id": getattr(request.state, "request_id", None),
+    })
