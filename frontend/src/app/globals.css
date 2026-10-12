@@ -111,7 +111,7 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .scoreline-card strong { font-size: 21px; }
 .scoreline-card span { color: var(--muted); font-size: 12px; }
 .odds-table { border: 1px solid var(--border); border-radius: 13px; overflow: hidden; }
-.odds-row { display: grid; grid-template-columns: 1fr auto 1fr 1.2fr; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.odds-row { display: grid; grid-template-columns: 1fr auto 1fr 1.2fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .odds-row:last-child { border-bottom: 0; }
 .odds-row span, .odds-row time { color: var(--muted); }
 .responsible-note { margin: 30px 0; padding: 14px 16px; border-left: 3px solid var(--accent); color: var(--muted); font-size: 12px; }
