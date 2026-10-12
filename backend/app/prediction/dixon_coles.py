@@ -186,3 +186,76 @@ def fit_dixon_coles(
         weighted_log_likelihood=-float(fitted.fun) + l2_penalty * (float(np.sum(attacks ** 2)) + float(np.sum(defences ** 2))),
         optimizer_message=str(fitted.message),
     )
+
+
+@dataclass(frozen=True)
+class TimeDecaySelection:
+    best_days: float
+    mean_log_loss_by_days: dict[float, float]
+    folds_used: int
+
+def select_time_decay(
+    observations: Sequence[MatchObservation],
+    *,
+    data_cutoff: datetime,
+    candidates: Sequence[float] = (90.0, 180.0, 365.0, 730.0),
+    folds: int = 3,
+    min_training_matches: int = 50,
+) -> TimeDecaySelection:
+    """Choose exponential decay by expanding-window, chronological validation only."""
+    if data_cutoff.tzinfo is None:
+        raise ModelFitError("data_cutoff must be timezone-aware.")
+    if folds < 1 or min_training_matches < 1:
+        raise ValueError("folds and min_training_matches must be positive.")
+    candidate_days = tuple(sorted({float(days) for days in candidates}))
+    if not candidate_days or any(days <= 0 or not np.isfinite(days) for days in candidate_days):
+        raise ValueError("Every time-decay candidate must be finite and positive.")
+    cutoff = data_cutoff.astimezone(timezone.utc)
+    eligible = []
+    for match in observations:
+        if match.played_at.tzinfo is None:
+            raise ModelFitError("Every training timestamp must be timezone-aware.")
+        if match.played_at.astimezone(timezone.utc) < cutoff:
+            eligible.append(match)
+    eligible.sort(key=lambda match: match.played_at.astimezone(timezone.utc))
+    if len(eligible) < min_training_matches + folds * 5:
+        raise ModelFitError("Insufficient data for expanding-window time-decay validation.")
+    fold_size = min(max(5, len(eligible) // 10),
+                    max(1, (len(eligible) - min_training_matches) // folds))
+    starts = [len(eligible) - folds * fold_size + index * fold_size for index in range(folds)]
+    scores: dict[float, list[float]] = {days: [] for days in candidate_days}
+    for start in starts:
+        validation = eligible[start:start + fold_size]
+        if not validation:
+            continue
+        fold_cutoff = min(match.played_at.astimezone(timezone.utc) for match in validation)
+        for days in candidate_days:
+            try:
+                model = fit_dixon_coles(
+                    eligible, data_cutoff=fold_cutoff, time_decay_days=days,
+                    min_matches=min_training_matches, min_team_matches=1,
+                )
+            except ModelFitError:
+                continue
+            losses: list[float] = []
+            for match in validation:
+                if match.home_team not in model.attack_strength or match.away_team not in model.attack_strength:
+                    continue
+                home_rate, away_rate = model.expected_goals(match.home_team, match.away_team)
+                correction = _tau(match.home_goals, match.away_goals, home_rate, away_rate, model.rho)
+                if correction <= 0:
+                    losses.append(1e6)
+                    continue
+                log_probability = (
+                    np.log(correction)
+                    + match.home_goals * np.log(home_rate) - home_rate - gammaln(match.home_goals + 1)
+                    + match.away_goals * np.log(away_rate) - away_rate - gammaln(match.away_goals + 1)
+                )
+                losses.append(float(-log_probability))
+            if losses:
+                scores[days].append(float(np.mean(losses)))
+    means = {days: float(np.mean(values)) for days, values in scores.items() if values}
+    if not means:
+        raise ModelFitError("No valid chronological validation fold could be fitted.")
+    best = min(means, key=means.get)
+    return TimeDecaySelection(best_days=best, mean_log_loss_by_days=means, folds_used=min(len(v) for v in scores.values() if v))
