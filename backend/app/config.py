@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     owner_exists: bool = False
     demo_mode: bool = False
     timezone: str = "Africa/Lagos"
-    session_secret: SecretStr = SecretStr("development-only-change-me")  # nosec B105 -- loopback-only default; production startup rejects it.  # nosec B105: rejected in production
+    session_secret: SecretStr = SecretStr("development-only-change-me")  # nosec B105 -- loopback-only default; production startup rejects it.
     provider_api_key: SecretStr | None = None
     llm_api_key: SecretStr | None = None
     llm_model: str = "gpt-5-mini"
