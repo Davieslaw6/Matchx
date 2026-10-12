@@ -45,7 +45,6 @@ async def import_results_csv(content: bytes, *, competition_code: str | None = N
             competition = await db.scalar(select(Competition).where(
                 Competition.provider == "football-data.co.uk",
                 Competition.provider_competition_id == competition_id,
-                Competition.season == season,
             ))
             if not competition:
                 competition = Competition(provider="football-data.co.uk",
@@ -64,6 +63,7 @@ async def import_results_csv(content: bytes, *, competition_code: str | None = N
                 fixture.competition_id = competition.id
                 fixture.home_team_id = home.id
                 fixture.away_team_id = away.id
+                fixture.match_date = record["match_date"]
                 fixture.kickoff_at = record["kickoff_at"]
                 fixture.status = "finished"
                 fixture.season = season
@@ -82,13 +82,30 @@ async def import_results_csv(content: bytes, *, competition_code: str | None = N
                             record["kickoff_at"] + timedelta(minutes=30),
                         ),
                     ).limit(1))
+                else:
+                    canonical = await db.scalar(select(Fixture).where(
+                        Fixture.competition_id == competition.id,
+                        Fixture.home_team_id == home.id,
+                        Fixture.away_team_id == away.id,
+                        Fixture.match_date == record["match_date"],
+                    ).limit(1))
                 if canonical:
                     counts["duplicates"] += 1
+                    fixture = canonical
+                    result = await db.scalar(select(MatchResult).where(MatchResult.fixture_id == fixture.id))
+                    if result:
+                        result.home_goals = record["home_goals"]
+                        result.away_goals = record["away_goals"]
+                        result.source = "football-data.co.uk"
+                    else:
+                        db.add(MatchResult(fixture_id=fixture.id, home_goals=record["home_goals"],
+                            away_goals=record["away_goals"], source="football-data.co.uk"))
                     continue
                 fixture = Fixture(provider=record["provider"],
                     provider_fixture_id=record["provider_fixture_id"],
                     competition_id=competition.id, home_team_id=home.id, away_team_id=away.id,
-                    kickoff_at=record["kickoff_at"], status="finished", season=season)
+                    match_date=record["match_date"], kickoff_at=record["kickoff_at"],
+                    status="finished", season=season)
                 db.add(fixture)
                 await db.flush()
                 counts["inserted"] += 1
