@@ -64,12 +64,13 @@ async def load_observations(db: AsyncSession, competition_id: str) -> list[Match
         key = (odds.fixture_id, odds.provider, odds.bookmaker or "", market, observed)
         groups.setdefault(key, {})[outcome] = float(odds.decimal_odds)
     closing_by_fixture: dict[str, tuple[float, float, float]] = {}
-    candidates: dict[str, list[tuple[datetime, dict[int, float]]]] = {}
-    for (fixture_id, _, _, _, observed), outcomes in groups.items():
+    candidates: dict[str, list[tuple[datetime, str, dict[int, float]]]] = {}
+    for (fixture_id, _, bookmaker, _, observed), outcomes in groups.items():
         if set(outcomes) == {0, 1, 2}:
-            candidates.setdefault(fixture_id, []).append((observed, outcomes))
+            candidates.setdefault(fixture_id, []).append((observed, bookmaker, outcomes))
+    bookmaker_priority = {"Market average": 4, "Pinnacle": 3, "Bet365": 2}
     for fixture_id, snapshots in candidates.items():
-        _, outcomes = max(snapshots, key=lambda item: item[0])
+        _, _, outcomes = max(snapshots, key=lambda item: (item[0], bookmaker_priority.get(item[1], 0)))
         closing_by_fixture[fixture_id] = (outcomes[0], outcomes[1], outcomes[2])
 
     observations: list[MatchObservation] = []
