@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -38,9 +39,11 @@ type Detail = {
       retained_scoreline_mass: number;
     };
   } | null;
-  odds: { provider: string; bookmaker: string | null; market: string; outcome: string; decimal_odds: number; observed_at: string }[];
+  odds: { id: string; provider: string; bookmaker: string | null; market: string; outcome: string; decimal_odds: number; observed_at: string }[];
 };
-type ApiError = { message?: string };
+type ApiError = { message?: string; detail?: { message?: string } };
+type TicketOption = { id: string; name: string; status: string; selection_count: number };
+type PendingTicketAction = { token: string; summary: string; warnings: string[] };
 
 function percent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
@@ -52,6 +55,11 @@ export default function AnalysisPage() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState<TicketOption[]>([]);
+  const [ticketId, setTicketId] = useState("");
+  const [pendingAction, setPendingAction] = useState<PendingTicketAction | null>(null);
+  const [ticketBusy, setTicketBusy] = useState(false);
+  const [ticketNotice, setTicketNotice] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,8 +75,18 @@ export default function AnalysisPage() {
         throw new Error(body.message || "Could not load match analysis.");
       }
       return (await response.json()) as Detail;
-    }).then((value) => {
-      if (value) setDetail(value);
+    }).then(async (value) => {
+      if (value) {
+        setDetail(value);
+        const ticketResponse = await fetch("/api/v1/tickets", { credentials: "same-origin", signal: controller.signal });
+        if (ticketResponse.status === 401) { router.replace("/login"); return; }
+        if (ticketResponse.ok) {
+          const ticketBody = (await ticketResponse.json()) as { items: TicketOption[] };
+          const drafts = ticketBody.items.filter((ticket) => ticket.status === "draft");
+          setTickets(drafts);
+          setTicketId((current) => current || drafts[0]?.id || "");
+        }
+      }
     }).catch((cause: unknown) => {
       if (cause instanceof Error && cause.name !== "AbortError") setError(cause.message);
     }).finally(() => {
@@ -76,6 +94,64 @@ export default function AnalysisPage() {
     });
     return () => controller.abort();
   }, [params.fixtureId, router]);
+
+  async function previewAddSelection(odd: Detail["odds"][number]) {
+    if (!detail || !ticketId) {
+      setError("Create or select a draft ticket first.");
+      return;
+    }
+    setError("");
+    setTicketNotice("");
+    const csrfCookie = document.cookie.split("; ").find((item) => item.startsWith("matchx_csrf="));
+    const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("matchx_csrf=".length)) : "";
+    if (!csrfToken) { setError("CSRF token missing. Sign in again."); return; }
+    setTicketBusy(true);
+    try {
+      const response = await fetch("/api/v1/tickets/preview", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        body: JSON.stringify({ action: "add_selection", payload: {
+          ticket_id: ticketId, fixture_id: detail.id, market_odds_id: odd.id,
+        } }),
+      });
+      const body = (await response.json()) as { confirmation_token?: string; preview?: { summary?: string; warnings?: string[] }; message?: string; detail?: { message?: string } };
+      if (response.status === 401) { router.replace("/login"); return; }
+      if (!response.ok || !body.confirmation_token) throw new Error(body.detail?.message || body.message || "Could not preview selection.");
+      setPendingAction({ token: body.confirmation_token, summary: body.preview?.summary ?? "Add selection to ticket", warnings: body.preview?.warnings ?? [] });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not preview selection.");
+    } finally {
+      setTicketBusy(false);
+    }
+  }
+
+  async function confirmAddSelection() {
+    if (!pendingAction) return;
+    const csrfCookie = document.cookie.split("; ").find((item) => item.startsWith("matchx_csrf="));
+    const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("matchx_csrf=".length)) : "";
+    setTicketBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/v1/tickets/confirm", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        body: JSON.stringify({ confirmation_token: pendingAction.token }),
+      });
+      const body = (await response.json()) as { message?: string; detail?: { message?: string } };
+      if (response.status === 401) { router.replace("/login"); return; }
+      if (!response.ok) throw new Error(body.detail?.message || body.message || "Selection was not confirmed.");
+      setPendingAction(null);
+      setTicketNotice("Selection added to the draft. Open the ticket manager to review its revision history.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not confirm selection.");
+    } finally {
+      setTicketBusy(false);
+    }
+  }
+
+  function changeTicket(event: ChangeEvent<HTMLSelectElement>) {
+    setTicketId(event.target.value);
+  }
 
   return (
     <main className="dashboard">
@@ -85,6 +161,8 @@ export default function AnalysisPage() {
       </header>
       {loading ? <p className="empty-state">Loading match data…</p> : null}
       {error ? <p className="inline-error" role="alert">{error}</p> : null}
+      {ticketNotice ? <p className="ticket-notice" role="status">{ticketNotice} <Link href="/tickets">Open ticket manager →</Link></p> : null}
+      {pendingAction ? <section className="confirmation-panel"><p className="eyebrow">CONFIRM SELECTION</p><h2>{pendingAction.summary}</h2>{pendingAction.warnings.map((warning) => <p key={warning}>{warning}</p>)}<div className="confirmation-actions"><button type="button" disabled={ticketBusy} onClick={() => void confirmAddSelection()}>Confirm add</button><button type="button" className="secondary-button" disabled={ticketBusy} onClick={() => setPendingAction(null)}>Cancel</button></div></section> : null}
       {detail ? <>
         <section className="analysis-match">
           <p className="eyebrow">{detail.competition} · {detail.status}</p>
@@ -131,12 +209,21 @@ export default function AnalysisPage() {
         </>}
         <section className="analysis-section">
           <div className="section-heading"><div><p className="eyebrow">OBSERVED DATA</p><h2>Odds snapshots</h2></div></div>
-          {detail.odds.length === 0 ? <p className="empty-state">No odds snapshots are stored for this fixture.</p> : <div className="odds-table">
-            {detail.odds.map((odd, index) => <article className="odds-row" key={`${odd.provider}-${odd.bookmaker}-${odd.market}-${odd.outcome}-${odd.observed_at}-${index}`}>
-              <span>{odd.market} / {odd.outcome}</span><strong>{odd.decimal_odds.toFixed(2)}</strong>
-              <span>{odd.bookmaker ?? odd.provider}</span><time>{new Date(odd.observed_at).toLocaleString()}</time>
-            </article>)}
-          </div>}
+          {detail.odds.length === 0 ? <p className="empty-state">No odds snapshots are stored for this fixture.</p> : <>
+            <div className="ticket-add-controls">
+              {tickets.length === 0 ? <p>No draft tickets available. <Link href="/tickets">Create a ticket first →</Link></p> : <>
+                <label htmlFor="target-ticket">Add an observed selection to</label>
+                <select id="target-ticket" value={ticketId} onChange={changeTicket}>{tickets.map((ticket) => <option key={ticket.id} value={ticket.id}>{ticket.name} ({ticket.selection_count})</option>)}</select>
+              </>}
+            </div>
+            <div className="odds-table">
+              {detail.odds.map((odd) => <article className="odds-row" key={odd.id}>
+                <span>{odd.market} / {odd.outcome}</span><strong>{odd.decimal_odds.toFixed(2)}</strong>
+                <span>{odd.bookmaker ?? odd.provider}</span><time>{new Date(odd.observed_at).toLocaleString()}</time>
+                <button type="button" className="secondary-button" disabled={ticketBusy || !ticketId || detail.status !== "scheduled"} onClick={() => void previewAddSelection(odd)}>Preview add</button>
+              </article>)}
+            </div>
+          </>}
         </section>
         <p className="responsible-note">Probabilities are model estimates, not guarantees. Historical calibration does not establish future profitability. No wager is placed by this application.</p>
       </> : null}
