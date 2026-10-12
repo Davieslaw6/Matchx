@@ -9,7 +9,7 @@ type TicketSummary = { id: string; name: string; status: string; notes: string |
 type Selection = { id: string; fixture_id: string; competition: string; home_team: string; away_team: string; match_date: string | null; kickoff_at: string | null; market: string; outcome: string; odds_snapshot: string; bookmaker: string | null; metadata: Record<string, string> };
 type Revision = { revision: number; actor: string; before_state: Record<string, unknown>; after_state: Record<string, unknown>; created_at: string };
 type TicketDetail = { id: string; name: string; status: string; notes: string | null; selection_count: number; combined_decimal_odds: string; selections: Selection[]; revisions: Revision[] };
-type PendingAction = { action: string; token: string; summary: string; warnings: string[] };
+type PendingAction = { action: string; token: string; idempotencyKey: string; summary: string; warnings: string[] };
 type ApiError = { message?: string; detail?: { message?: string } };
 
 export default function TicketsPage() {
@@ -62,10 +62,10 @@ export default function TicketsPage() {
       headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
       body: JSON.stringify({ action, payload }),
     });
-    const body = (await response.json()) as { confirmation_token?: string; preview?: { summary?: string; warnings?: string[] }; detail?: ApiError["detail"]; message?: string };
+    const body = (await response.json()) as { confirmation_token?: string; idempotency_key?: string; preview?: { summary?: string; warnings?: string[] }; detail?: ApiError["detail"]; message?: string };
     if (response.status === 401) { router.replace("/login"); return; }
-    if (!response.ok || !body.confirmation_token) throw new Error(body.detail?.message || body.message || "Could not preview ticket action.");
-    setPending({ action, token: body.confirmation_token, summary: body.preview?.summary ?? "Confirm ticket action", warnings: body.preview?.warnings ?? [] });
+    if (!response.ok || !body.confirmation_token || !body.idempotency_key) throw new Error(body.detail?.message || body.message || "Could not preview ticket action.");
+    setPending({ action, token: body.confirmation_token, idempotencyKey: body.idempotency_key, summary: body.preview?.summary ?? "Confirm ticket action", warnings: body.preview?.warnings ?? [] });
   }
 
   async function confirmAction() {
@@ -77,7 +77,7 @@ export default function TicketsPage() {
       const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("matchx_csrf=".length)) : "";
       const response = await fetch("/api/v1/tickets/confirm", {
         method: "POST", credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken, "Idempotency-Key": pending.idempotencyKey },
         body: JSON.stringify({ confirmation_token: pending.token }),
       });
       const body = (await response.json()) as { ticket_id?: string; detail?: ApiError["detail"]; message?: string };
