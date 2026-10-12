@@ -1,9 +1,11 @@
 """football-data.org v4 adapter. Only returns provider-sourced, validated records."""
 import asyncio
+import hashlib
+import json
 import secrets
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -42,6 +44,8 @@ class MatchRecord(BaseModel):
     score: dict[str, Any] = Field(default_factory=dict)
     venue: str | None = None
 
+RawPayloadSink = Callable[[dict[str, Any]], Awaitable[None]]
+
 class FootballDataOrgProvider:
     name = "football-data.org"
     capabilities = CapabilityFlags(supports_odds=False, supports_xg=False,
@@ -50,7 +54,8 @@ class FootballDataOrgProvider:
 
     def __init__(self, api_key: str, *, base_url: str = "https://api.football-data.org/v4",
                  timeout_seconds: float = 12, max_retries: int = 3,
-                 client: httpx.AsyncClient | None = None):
+                 client: httpx.AsyncClient | None = None,
+                 raw_payload_sink: RawPayloadSink | None = None):
         if not api_key.strip():
             raise ValueError("football-data.org API token is required.")
         self._api_key = api_key.strip()
@@ -58,9 +63,13 @@ class FootballDataOrgProvider:
         self._timeout = timeout_seconds
         self._max_retries = max(0, min(max_retries, 5))
         self._client = client
+        self._raw_payload_sink = raw_payload_sink
         self._owns_client = client is None
         self._failure_count = 0
         self._open_until: datetime | None = None
+
+    def set_raw_payload_sink(self, sink: RawPayloadSink) -> None:
+        self._raw_payload_sink = sink
 
     async def __aenter__(self):
         if self._client is None:
@@ -110,6 +119,15 @@ class FootballDataOrgProvider:
                 payload = response.json()
                 if not isinstance(payload, dict):
                     raise ProviderError("Provider returned a non-object JSON payload.")
+                if self._raw_payload_sink is not None:
+                    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    await self._raw_payload_sink({
+                        "provider": self.name,
+                        "data_type": path.split("?", 1)[0],
+                        "content_hash": hashlib.sha256(canonical).hexdigest(),
+                        "payload": payload,
+                        "fetched_at": datetime.now(timezone.utc),
+                    })
                 self._failure_count = 0
                 self._open_until = None
                 return payload
