@@ -219,6 +219,23 @@ def upgrade() -> None:
     )
     op.create_index("ix_uploaded_files_content_hash", "uploaded_files", ["content_hash"])
     op.create_table(
+        "screenshot_imports",
+        sa.Column("id", sa.String(36), primary_key=True),
+        sa.Column("filename", sa.String(160), nullable=False),
+        sa.Column("mime_type", sa.String(80), nullable=False),
+        sa.Column("sha256", sa.String(64), nullable=False),
+        sa.Column("image_data", sa.LargeBinary(), nullable=False),
+        sa.Column("status", sa.String(24), nullable=False),
+        sa.Column("ocr_text", sa.Text(), nullable=False),
+        sa.Column("parsed_data", sa.JSON(), nullable=False),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("review_notes", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("reviewed_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.create_index("ix_screenshot_imports_sha256", "screenshot_imports", ["sha256"], unique=True)
+    op.create_index("ix_screenshot_imports_status", "screenshot_imports", ["status"])
+    op.create_table(
         "booking_code_jobs",
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("bookmaker_id", sa.String(100), nullable=False),
@@ -294,6 +311,9 @@ def downgrade() -> None:
     op.drop_index("ix_booking_code_selections_job_id", table_name="booking_code_selections")
     op.drop_table("booking_code_selections")
     op.drop_table("booking_code_jobs")
+    op.drop_index("ix_screenshot_imports_status", table_name="screenshot_imports")
+    op.drop_index("ix_screenshot_imports_sha256", table_name="screenshot_imports")
+    op.drop_table("screenshot_imports")
     op.drop_index("ix_uploaded_files_content_hash", table_name="uploaded_files")
     op.drop_table("uploaded_files")
     op.drop_index("ix_messages_conversation_id", table_name="messages")
