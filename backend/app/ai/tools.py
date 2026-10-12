@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -203,7 +203,7 @@ class ToolRegistry:
             return {"status": "unsupported_tool", "message": "This tool is not allowlisted."}
         try:
             args = spec.arguments.model_validate_json(raw_arguments)
-        except (ValidationError, ValueError):
+        except ValueError:
             return {"status": "invalid_arguments", "message": "Tool arguments failed schema validation."}
         try:
             result = await asyncio.wait_for(spec.handler(args, db), timeout=6.0)
