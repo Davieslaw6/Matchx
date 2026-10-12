@@ -9,9 +9,28 @@ from app.ai.provider import LLMProviderError, OpenAIResponsesProvider
 from app.auth import require_csrf, require_owner
 from app.config import get_settings
 from app.db import get_db
-from app.models import Conversation, Message, Session
+from app.models import ApiQuotaUsage, Conversation, Message, Session
 
 router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
+
+CHAT_REQUESTS_PER_HOUR = 30
+
+async def _consume_chat_quota(db: AsyncSession) -> None:
+    now = datetime.now(timezone.utc)
+    hour = now.replace(minute=0, second=0, microsecond=0)
+    usage = await db.scalar(select(ApiQuotaUsage).where(
+        ApiQuotaUsage.provider == "llm_chat", ApiQuotaUsage.period_start == hour
+    ).with_for_update())
+    if usage and usage.calls >= CHAT_REQUESTS_PER_HOUR:
+        await db.rollback()
+        raise HTTPException(status_code=429, detail={
+            "code":"ai_rate_limit", "message":"AI request limit reached for this hour. Try again later."
+        })
+    if usage is None:
+        db.add(ApiQuotaUsage(provider="llm_chat", period_start=hour, calls=1))
+    else:
+        usage.calls += 1
+    await db.commit()
 
 class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -79,6 +98,7 @@ async def chat(
         await db.rollback()
     history.append({"role": "user", "content": body.message})
     history = history[-20:]
+    await _consume_chat_quota(db)
     try:
         result = await provider.answer(history, db)
     except LLMProviderError as exc:
