@@ -149,6 +149,7 @@ async def fixture_detail(
             "feature_snapshot": prediction.feature_snapshot,
         } if prediction else None),
         "odds": [{
+            "id": item.id,
             "provider": item.provider, "bookmaker": item.bookmaker, "market": item.market,
             "outcome": item.outcome, "decimal_odds": float(item.decimal_odds),
             "observed_at": _iso_utc(item.observed_at),
