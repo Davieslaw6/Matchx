@@ -11,7 +11,7 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - football-data.co.uk CSV parser/import CLI for historical results and a provider sync service with audit records.
 - Unicode-normalized team resolver with RapidFuzz candidate scoring.
 - Initial pure Poisson scoreline-grid and derived market calculation package with invariant tests.
-- PostgreSQL 16 Compose service and CI workflow.
+- PostgreSQL 18 Compose service and CI workflow.
 
 The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
 
@@ -20,15 +20,27 @@ The prediction package includes a trained-model fitter and backtest runner, but 
 - Node.js 24 LTS+
 - Docker Compose
 
-## Local setup
-1. Copy backend/.env.example to backend/.env; set a unique random SESSION_SECRET.
-2. Start PostgreSQL after setting a local password: POSTGRES_PASSWORD=choose-a-local-password docker compose up -d postgres.
-3. From backend/, create a Python 3.12 virtual environment and run python -m pip install -e ".[dev]".
-4. From backend/, run alembic upgrade head to create the schema.
-5. From backend/, run python -m app.owner_cli create-owner and enter a strong password. Rotate it later with python -m app.owner_cli reset-owner-password.
-6. Start the API from backend/: uvicorn app.main:app --reload --host 127.0.0.1 --port 8000.
-7. In another terminal, run npm install then npm run dev from frontend/.
-8. Open http://localhost:3000 and sign in with the owner password.
+## Local development (SQLite)
+
+1. Copy `backend/.env.example` to `backend/.env` and set `SESSION_SECRET` to a generated random value.
+2. From `backend/`, create a Python 3.12+ virtual environment and run `python -m pip install -e ".[dev]"`.
+3. From `backend/`, run `alembic upgrade head`.
+4. From `backend/`, run `python -m app.owner_cli create-owner` and enter a strong password.
+5. Start the API from `backend/`: `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
+6. In another terminal, run `npm install` and `npm run dev` from `frontend/`.
+7. Open `http://localhost:3000`.
+
+The default local database is SQLite. The Docker deployment below uses PostgreSQL 18.
+
+## Local deployment with Docker
+
+1. Copy `.env.example` to `.env`.
+2. Generate two URL-safe secrets with `openssl rand -hex 32`; place one in `POSTGRES_PASSWORD` and one in `SESSION_SECRET`. Do not commit `.env`.
+3. Run `docker compose up -d --build`.
+4. Create the single owner account with `docker compose exec -it backend python -m app.owner_cli create-owner`.
+5. Open `http://localhost:3000`.
+
+The backend is not published to the host; the frontend is bound to loopback only. The Docker deployment uses production cookie/security settings. Add an LLM key to `.env` and recreate the backend to enable AI chat. A live odds-provider integration is not configured.
 
 ## Import data
 For historical CSV results, download a football-data.co.uk CSV in accordance with its current terms and run from backend/:
