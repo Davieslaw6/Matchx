@@ -143,6 +143,7 @@ class PredictionEvaluation(Base):
     prediction_id: Mapped[str] = mapped_column(ForeignKey("predictions.id", ondelete="CASCADE"), nullable=False, index=True)
     evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     metrics: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    __table_args__ = (UniqueConstraint("prediction_id", name="uq_prediction_evaluation"),)
 
 class Ticket(Base, Timestamped):
     __tablename__ = "tickets"
