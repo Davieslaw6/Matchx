@@ -22,6 +22,7 @@ class MatchObservation:
     home_goals: int
     away_goals: int
     played_at: datetime
+    closing_odds: tuple[float, float, float] | None = None
 
 @dataclass(frozen=True)
 class DixonColesModel:
