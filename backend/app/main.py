@@ -49,8 +49,22 @@ app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allo
 async def security_and_request_id(request: Request, call_next):
     request_id = request.headers.get("X-Request-ID", str(uuid4()))
     request.state.request_id = request_id
+    content_length = request.headers.get("content-length")
+    if request.url.path == "/api/v1/imports/screenshots" and request.method == "POST" and content_length:
+        try:
+            declared_length = int(content_length)
+        except ValueError:
+            declared_length = 0
+        if declared_length > 5 * 1024 * 1024 + 256 * 1024:
+            response = JSONResponse(status_code=413, content={"code":"image_too_large",
+                "message":"Multipart upload exceeds the 5 MiB image limit.", "details":None, "request_id":request_id})
+        else:
+            response = None
+    else:
+        response = None
     try:
-        response = await call_next(request)
+        if response is None:
+            response = await call_next(request)
     except Exception:
         log.exception("unhandled_request_error", request_id=request_id, path=request.url.path)
         response = JSONResponse(status_code=500, content={"code":"internal_error",
