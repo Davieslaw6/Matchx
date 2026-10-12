@@ -54,11 +54,12 @@ async def test_ticket_actions_require_preview_confirmation_and_are_idempotent(tm
                 json={"action":"create_ticket","payload":{"name":"Weekend draft","notes":None}})
             assert create_preview.status_code == 200
             token = create_preview.json()["confirmation_token"]
-            confirmed = await client.post("/api/v1/tickets/confirm", headers=headers,
+            create_headers = {**headers, "Idempotency-Key": create_preview.json()["idempotency_key"]}
+            confirmed = await client.post("/api/v1/tickets/confirm", headers=create_headers,
                 json={"confirmation_token":token})
             assert confirmed.status_code == 200
             ticket_id = confirmed.json()["ticket_id"]
-            replay = await client.post("/api/v1/tickets/confirm", headers=headers,
+            replay = await client.post("/api/v1/tickets/confirm", headers=create_headers,
                 json={"confirmation_token":token})
             assert replay.status_code == 200
             assert replay.json() == confirmed.json()
@@ -67,10 +68,11 @@ async def test_ticket_actions_require_preview_confirmation_and_are_idempotent(tm
                 json={"action":"add_selection","payload":{"ticket_id":ticket_id,"fixture_id":fixture_id,"market_odds_id":odds_id}})
             assert add_preview.status_code == 200
             add_token = add_preview.json()["confirmation_token"]
-            added = await client.post("/api/v1/tickets/confirm", headers=headers,
+            add_headers = {**headers, "Idempotency-Key": add_preview.json()["idempotency_key"]}
+            added = await client.post("/api/v1/tickets/confirm", headers=add_headers,
                 json={"confirmation_token":add_token})
             assert added.status_code == 200
-            repeated = await client.post("/api/v1/tickets/confirm", headers=headers,
+            repeated = await client.post("/api/v1/tickets/confirm", headers=add_headers,
                 json={"confirmation_token":add_token})
             assert repeated.json() == added.json()
 
@@ -83,7 +85,8 @@ async def test_ticket_actions_require_preview_confirmation_and_are_idempotent(tm
             remove_preview = await client.post("/api/v1/tickets/preview", headers=headers,
                 json={"action":"remove_selection","payload":{"ticket_id":ticket_id,"selection_id":selection_id}})
             assert remove_preview.status_code == 200
-            removed = await client.post("/api/v1/tickets/confirm", headers=headers,
+            remove_headers = {**headers, "Idempotency-Key": remove_preview.json()["idempotency_key"]}
+            removed = await client.post("/api/v1/tickets/confirm", headers=remove_headers,
                 json={"confirmation_token":remove_preview.json()["confirmation_token"]})
             assert removed.status_code == 200
 
