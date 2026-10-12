@@ -71,7 +71,7 @@ class OpenAIResponsesProvider:
 
     async def answer(self, history: list[dict[str, str]], db: AsyncSession) -> LLMResult:
         inputs: list[dict[str, Any]] = [
-            {"role": message["role"], "content": message["content"][:3000]}
+            {"role": message["role"], "content": message["content"][:2000]}
             for message in history[-20:]
             if message.get("role") in {"user", "assistant"} and isinstance(message.get("content"), str)
         ]
@@ -175,6 +175,6 @@ class OpenAIResponsesProvider:
                         await db.rollback()
                     output_text = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
                     outputs.append({"type": "function_call_output", "call_id": call_id,
-                                    "output": output_text[:8000]})
+                                    "output": output_text[:4000]})
                 inputs = outputs
         raise LLMProviderError("LLM tool loop ended without a grounded text answer.")
