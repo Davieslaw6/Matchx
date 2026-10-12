@@ -13,7 +13,7 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - Initial pure Poisson scoreline-grid and derived market calculation package with invariant tests.
 - PostgreSQL 16 Compose service and CI workflow.
 
-The prediction package is a baseline calculation, not a trained or backtested production model. No prediction performance claims are made.
+The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
 
 ## Requirements
 - Python 3.12+
@@ -34,6 +34,8 @@ The prediction package is a baseline calculation, not a trained or backtested pr
 For historical CSV results, download a football-data.co.uk CSV in accordance with its current terms and run from backend/:
 
     python -m app.sports.csv_import path/to/results.csv --competition-code E0 --season 2025-2026
+
+For the grounded AI chat, set LLM_API_KEY in backend/.env. LLM_MODEL selects the model and LLM_BASE_URL defaults to the OpenAI Responses API endpoint. If the key is missing, chat returns an explicit configuration error. Tools are allowlisted and read-only; ticket mutation and wager placement are not exposed to the model.
 
 For a bounded football-data.org sync, set PROVIDER_API_KEY in backend/.env and run:
 
@@ -59,4 +61,4 @@ From frontend/: npm run lint, npm run typecheck, npm run test, and npm run build
 These commands have not been executed in the authoring environment. Consult docs/VERIFICATION_LOG.md.
 
 ## Current limitations
-The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and quota/TTL caching is absent. Raw football-data.org JSON is retained during sync. Cross-provider canonical fixture resolution is conservative. Dixon–Coles fitting/backtesting, AI orchestration, odds ingestion, ticket mutation confirmation, secure screenshot import, booking-code integration, deployment/restore automation and full security audits remain incomplete.
+The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and quota/TTL caching is absent. Raw football-data.org JSON is retained during sync. Cross-provider canonical fixture resolution is conservative. Real-data model fitting/backtest execution, odds ingestion, ticket workflows, secure screenshot import, booking-code integration, deployment/restore automation and full security audits remain incomplete.
