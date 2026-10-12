@@ -20,8 +20,8 @@
 | 3 Sports data | Partial implementation | Adapter, CSV importer, resolver, sync service and explorer API/UI exist. Raw provider bytes, quota/TTL cache, complete canonical cross-provider identity and scheduled jobs remain. |
 | 4 Prediction | M0 + M1 code added; unverified | Dixon-Coles fitter, decay CV helper, walk-forward metrics, paired baselines and DB-backed report CLI added; no real historical backtest has been run. |
 | 5 AI chat | Partial implementation | OpenAI Responses provider, allowlisted read-only data tools, bounded tool loop, numeric grounding check/retry/fallback and conversation UI added; live API key absent and tests unexecuted. |
-| 6 Analysis/odds | Partial | Explorer available; detailed analysis, odds ingestion and freshness handling absent. |
-| 7 Tickets | Models only | No ticket service, confirmation tokens, split/optimizer or exports. |
+| 6 Analysis/odds | Partial implementation | Fixture analysis UI/API shows stored predictions and odds observation precision; football-data.co.uk historical 1X2 odds are imported idempotently. Live odds provider, full odds market coverage and live freshness workflow remain. |
+| 7 Tickets | Partial implementation | Draft create/add/remove/archive, signed two-minute confirmation, session binding, CSRF, required Idempotency-Key, revision history and CSV export. No split/optimizer, multiple export formats or wager placement. |
 | 8 Screenshot import | Model only | No secure upload pipeline. |
 | 9 Booking codes | Models only | No integration state machine or real integrations. |
 | 10 History/settings | Models added | No evaluation/retention/export workflow. |
