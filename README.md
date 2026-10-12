@@ -14,6 +14,7 @@ Private, single-owner football analysis assistant. Runtime status and gaps are r
 - Fixture analysis UI/API for stored predictions, expected goals, scorelines, odds snapshots and source provenance.
 - Grounded AI chat with an OpenAI Responses adapter, allowlisted read-only tools, bounded tool calls, numeric/date grounding checks, saved conversations and an hourly request limit.
 - Ticket manager with draft create/add/remove/archive, signed preview-confirm flow, session binding, required idempotency keys, audit revisions and CSV export; no wager placement.
+- Screenshot upload with PNG/JPEG/WEBP validation, immutable original storage, OCR candidate extraction, duplicate detection and manual review; OCR never writes odds or tickets.
 - PostgreSQL 18, backend and frontend Docker images; CI workflow includes lint, security/dependency checks, tests and container builds (runs have not yet been verified).
 
 The prediction package includes a trained-model fitter and backtest runner, but no real-data training or backtest has been executed in this authoring environment. No prediction performance claims are made.
@@ -33,7 +34,7 @@ The prediction package includes a trained-model fitter and backtest runner, but 
 6. In another terminal, run `npm install` and `npm run dev` from `frontend/`.
 7. Open `http://localhost:3000`.
 
-The default local database is SQLite. The Docker deployment below uses PostgreSQL 18.
+The default local database is SQLite. The Docker deployment below uses PostgreSQL 18. Local screenshot OCR also requires the Tesseract executable; the backend container includes it.
 
 ## Local deployment with Docker
 
@@ -76,4 +77,4 @@ From frontend/: npm run lint, npm run typecheck, npm run test, and npm run build
 These commands have not been executed in the authoring environment. Consult docs/VERIFICATION_LOG.md.
 
 ## Current limitations
-The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and quota/TTL caching is absent. Raw football-data.org JSON is retained during sync. Cross-provider canonical fixture resolution is conservative. Real-data model fitting/backtest execution, live odds-provider ingestion, complete ticket optimization, secure screenshot import, booking-code integration, deployment/restore automation and full security audits remain incomplete. Historical football-data.co.uk 1X2 odds can be imported, and draft tickets require preview, signed confirmation and an idempotency key.
+The frontend login and fixture explorer are wired to the API. Provider sync is not yet scheduled and quota/TTL caching is absent. Raw football-data.org JSON is retained during sync. Cross-provider canonical fixture resolution is conservative. Real-data model fitting/backtest execution, live odds-provider ingestion, complete ticket optimization, screenshot-to-market linking, booking-code integration, deployment/restore automation and full security audits remain incomplete. Historical football-data.co.uk 1X2 odds can be imported, and draft tickets require preview, signed confirmation and an idempotency key.
