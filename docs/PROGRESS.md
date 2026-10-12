@@ -19,7 +19,7 @@
 | 2 Data and access | Implemented in repository; verification pending | Login/session/CSRF code and UI exist; tests are unexecuted. |
 | 3 Sports data | Partial implementation | Adapter, CSV importer, resolver, sync service and explorer API/UI exist. Raw provider bytes, quota/TTL cache, complete canonical cross-provider identity and scheduled jobs remain. |
 | 4 Prediction | M0 + M1 code added; unverified | Dixon-Coles fitter, decay CV helper, walk-forward metrics, paired baselines and DB-backed report CLI added; no real historical backtest has been run. |
-| 5 AI chat | Not started | No LLM/tool orchestration. |
+| 5 AI chat | Partial implementation | OpenAI Responses provider, allowlisted read-only data tools, bounded tool loop, numeric grounding check/retry/fallback and conversation UI added; live API key absent and tests unexecuted. |
 | 6 Analysis/odds | Partial | Explorer available; detailed analysis, odds ingestion and freshness handling absent. |
 | 7 Tickets | Models only | No ticket service, confirmation tokens, split/optimizer or exports. |
 | 8 Screenshot import | Model only | No secure upload pipeline. |
