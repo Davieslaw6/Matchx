@@ -17,6 +17,8 @@ This report is a checklist, not a claim of successful verification. GitHub conte
 | Frontend type check | npm run typecheck | NOT RUN |
 | Frontend tests | npm run test | NOT RUN |
 | AI grounding/tool orchestration tests | pytest tests/test_ai_grounding.py tests/test_ai_provider.py | NOT RUN |
+| Historical odds parser/import tests | pytest tests/test_football_data_odds.py tests/test_csv_odds_import.py | NOT RUN |
+| Ticket preview/confirm/idempotency tests | pytest tests/test_ticket_routes.py | NOT RUN |
 | Production frontend build | npm run build | NOT RUN |
 | Live provider calls | bounded football-data.org sync | NOT RUN |
 | Model backtest/leakage evaluation | reproducible walk-forward run | NOT RUN |
