@@ -6,4 +6,4 @@ client = TestClient(app)
 def test_fixture_explorer_requires_owner_session():
     response = client.get("/api/v1/fixtures")
     assert response.status_code == 401
-    assert response.json()["detail"]["code"] == "authentication_required"
+    assert response.json()["code"] == "authentication_required"
