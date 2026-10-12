@@ -1,7 +1,5 @@
 """Owner-only AI chat endpoints. Conversation mutations require CSRF validation."""
 from datetime import datetime, timezone
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -11,7 +9,7 @@ from app.ai.provider import LLMProviderError, OpenAIResponsesProvider
 from app.auth import require_csrf, require_owner
 from app.config import get_settings
 from app.db import get_db
-from app.models import Conversation, Message, Session, utcnow
+from app.models import Conversation, Message, Session
 
 router = APIRouter(prefix="/api/v1/ai", tags=["ai"])
 
@@ -65,16 +63,15 @@ async def chat(
             "code":"llm_not_configured", "message":str(exc)
         }) from exc
 
-    conversation = None
     history: list[dict[str, str]] = []
     if body.conversation_id:
-        conversation = await db.get(Conversation, body.conversation_id)
-        if conversation is None:
+        existing_conversation = await db.get(Conversation, body.conversation_id)
+        if existing_conversation is None:
             raise HTTPException(status_code=404, detail={
                 "code":"conversation_not_found", "message":"Conversation not found."
             })
         old_messages = (await db.scalars(
-            select(Message).where(Message.conversation_id == conversation.id)
+            select(Message).where(Message.conversation_id == body.conversation_id)
             .order_by(Message.created_at.desc()).limit(19)
         )).all()
         history = [{"role": item.role, "content": item.content}
@@ -91,12 +88,17 @@ async def chat(
         }) from exc
 
     now = datetime.now(timezone.utc)
-    if conversation is None:
+    if body.conversation_id is None:
         title = " ".join(body.message.split())[:80] or "New conversation"
         conversation = Conversation(title=title)
         db.add(conversation)
         await db.flush()
     else:
+        conversation = await db.get(Conversation, body.conversation_id)
+        if conversation is None:
+            raise HTTPException(status_code=404, detail={
+                "code":"conversation_not_found", "message":"Conversation not found."
+            })
         conversation.updated_at = now
     user_message = Message(conversation_id=conversation.id, role="user", content=body.message,
                            metadata_json={})
