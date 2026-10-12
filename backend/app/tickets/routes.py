@@ -92,7 +92,7 @@ def _utc(value: datetime | None) -> datetime | None:
 
 def _csv_safe(value: Any) -> str:
     text = "" if value is None else str(value)
-    return "'" + text if text.startswith(("=", "+", "-", "@", "\t", "\r")) else text
+    return "'" + text if text.lstrip(" \t\r\n").startswith(("=", "+", "-", "@")) else text
 
 async def _revision(db: AsyncSession, ticket_id: str, before: dict[str, Any], after: dict[str, Any]) -> None:
     latest = await db.scalar(select(func.max(TicketRevision.revision)).where(TicketRevision.ticket_id == ticket_id))
