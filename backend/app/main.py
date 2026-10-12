@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import structlog
 from sqlalchemy import select, text
 from app.ai.routes import router as ai_router
+from app.history.routes import router as history_router
 from app.imports.routes import router as screenshot_imports_router
 from app.auth import router as auth_router
 from app.config import get_settings
@@ -37,6 +38,7 @@ app = FastAPI(title="MATCH X API", version="0.2.0",
 app.include_router(auth_router)
 app.include_router(ai_router)
 app.include_router(screenshot_imports_router)
+app.include_router(history_router)
 app.include_router(fixtures_router)
 app.include_router(tickets_router)
 app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allow_credentials=True,
