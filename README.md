@@ -45,8 +45,9 @@ The default local database is SQLite. The Docker deployment below uses PostgreSQ
 2. Generate two URL-safe secrets with `openssl rand -hex 32`; place one in `POSTGRES_PASSWORD` and one in `SESSION_SECRET`. Do not commit `.env`.
 3. Build images and start only the database: `docker compose build && docker compose up -d postgres`.
 4. Apply migrations and create the owner before starting the public-bound backend: `docker compose run --rm -it --no-deps backend sh -c "alembic upgrade head && python -m app.owner_cli create-owner"`.
-5. Start the application: `docker compose up -d backend frontend`.
-6. Open `http://localhost:3000`.
+5. After the owner command succeeds, change `OWNER_EXISTS=false` to `OWNER_EXISTS=true` in `.env`.
+6. Start the application: `docker compose up -d backend frontend`.
+7. Open `http://localhost:3000`.
 
 The backend is not published to the host; the frontend is bound to loopback only. The Docker deployment uses production cookie/security settings. Add an LLM key to `.env` and recreate the backend to enable AI chat. A live odds-provider integration is not configured.
 
