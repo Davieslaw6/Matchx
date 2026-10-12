@@ -159,7 +159,7 @@ async def _validate_action(action: str, raw: dict[str, Any], db: AsyncSession) -
     return payload, {
         "summary":f"Add {odds.market} / {odds.outcome} at decimal odds {Decimal(odds.decimal_odds):.2f}",
         "fixture":{"id":fixture.id,"home":home.name if home else "Unknown","away":away.name if away else "Unknown","kickoff_at":kickoff.isoformat()},
-        "source":{"provider":odds.provider,"bookmaker":odds.bookmaker,"observed_at":observed.isoformat(),"market_odds_id":odds.id},
+        "source":{"provider":odds.provider,"bookmaker":odds.bookmaker,"observed_at":observed.isoformat(),"observed_at_precision":odds.observed_at_precision,"market_odds_id":odds.id},
         "warnings":["Odds are snapshotted for analysis; this action does not place a wager."],
     }
 
@@ -279,7 +279,7 @@ async def confirm_action(body: ConfirmBody, idempotency_key: str = Header(..., a
             count = int(await db.scalar(select(func.count(TicketSelection.id)).where(TicketSelection.ticket_id == ticket.id)) or 0)
             selection = TicketSelection(ticket_id=ticket.id,fixture_id=fixture.id,market=odds.market,outcome=odds.outcome,
                 odds_snapshot=Decimal(odds.decimal_odds),bookmaker=odds.bookmaker,
-                metadata_json={"market_odds_id":odds.id,"provider":odds.provider,"observed_at":_utc(odds.observed_at).isoformat()})
+                metadata_json={"market_odds_id":odds.id,"provider":odds.provider,"observed_at":_utc(odds.observed_at).isoformat(),"observed_at_precision":odds.observed_at_precision})
             db.add(selection)
             await db.flush()
             await _revision(db,ticket.id,{"selection_count":count,"status":ticket.status},
