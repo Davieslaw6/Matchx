@@ -129,7 +129,9 @@ def upgrade() -> None:
         sa.Column("outcome", sa.String(120), nullable=False),
         sa.Column("decimal_odds", sa.Numeric(12, 5), nullable=False),
         sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("observed_at_precision", sa.String(32), nullable=False),
         sa.Column("raw_payload_hash", sa.String(64), nullable=True),
+        sa.UniqueConstraint("fixture_id", "provider", "bookmaker", "market", "outcome", "observed_at", name="uq_market_odds_snapshot"),
     )
     op.create_index("ix_market_odds_fixture_id", "market_odds", ["fixture_id"])
     op.create_index("ix_market_odds_observed_at", "market_odds", ["observed_at"])
