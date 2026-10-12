@@ -1,8 +1,7 @@
 """football-data.org v4 adapter. Only returns provider-sourced, validated records."""
-from datetime import date, datetime, timezone
 import asyncio
 import random
-from datetime import timedelta
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
 
@@ -160,7 +159,7 @@ class FootballDataOrgProvider:
             raise ValueError("end date must be on or after start date")
         params: dict[str, Any] = {"dateFrom": start.isoformat(), "dateTo": end.isoformat()}
         if competition_id:
-            params["competitions"] = competition_id
+            params["competitions"] = self._validate_path_id(competition_id, "competition id")
         payload = await self._get("matches", params)
         raw = payload.get("matches")
         if not isinstance(raw, list):
@@ -172,24 +171,40 @@ class FootballDataOrgProvider:
                 kickoff = match.utcDate
                 if kickoff.tzinfo is None:
                     raise ProviderError("Provider kickoff timestamp has no timezone.")
+                home_id = match.homeTeam.get("id")
+                away_id = match.awayTeam.get("id")
+                competition_id_value = match.competition.get("id")
+                home_name = match.homeTeam.get("name")
+                away_name = match.awayTeam.get("name")
+                if not home_id or not away_id or not competition_id_value or not home_name or not away_name:
+                    raise ProviderError("Match record is missing a team or competition identity.")
+                status_map = {
+                    "TIMED": "scheduled", "SCHEDULED": "scheduled",
+                    "IN_PLAY": "live", "PAUSED": "live", "EXTRA_TIME": "live",
+                    "PENALTY_SHOOTOUT": "live", "FINISHED": "finished",
+                    "POSTPONED": "postponed", "SUSPENDED": "postponed",
+                    "CANCELLED": "cancelled", "ABANDONED": "abandoned", "AWARDED": "finished",
+                }
+                status = status_map.get(match.status.upper())
+                if status is None:
+                    raise ProviderError(f"Unsupported provider match status: {match.status}.")
                 records.append({
                     "provider": self.name, "provider_fixture_id": str(match.id),
-                    "competition_provider_id": str(match.competition.get("id", "")),
+                    "match_date": kickoff.astimezone(timezone.utc).date(),
+                    "competition_provider_id": str(competition_id_value),
                     "competition_name": match.competition.get("name"),
                     "season": str(match.season.get("id", "")) or None,
-                    "home_team_provider_id": str(match.homeTeam.get("id", "")),
-                    "home_team_name": match.homeTeam.get("name"),
-                    "away_team_provider_id": str(match.awayTeam.get("id", "")),
-                    "away_team_name": match.awayTeam.get("name"),
+                    "home_team_provider_id": str(home_id),
+                    "home_team_name": home_name,
+                    "away_team_provider_id": str(away_id),
+                    "away_team_name": away_name,
                     "kickoff_at": kickoff.astimezone(timezone.utc),
-                    "status": match.status.lower(),
+                    "status": status,
                     "matchday": match.matchday,
                     "venue": match.venue,
                     "score": match.score,
                 })
         except (ValidationError, TypeError, AttributeError) as exc:
-            if isinstance(exc, ProviderError):
-                raise
             raise ProviderError("Invalid match record in provider response.") from exc
         return records
 
