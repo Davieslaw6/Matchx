@@ -10,6 +10,8 @@ def _allowed_numbers(value: Any, allowed: set[float]) -> None:
     if isinstance(value, (int, float)):
         number = float(value)
         allowed.add(number)
+        allowed.add(round(number, 1))
+        allowed.add(round(number, 2))
         if 0 <= number <= 1:
             allowed.add(round(number * 100, 1))
             allowed.add(float(round(number * 100)))
