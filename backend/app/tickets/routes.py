@@ -156,11 +156,14 @@ async def _validate_action(action: str, raw: dict[str, Any], db: AsyncSession) -
             message = "This selection already exists." if item.outcome == odds.outcome else "A conflicting outcome for this market already exists."
             raise HTTPException(409, detail={"code":code,"message":message})
     home, away = await db.get(Team, fixture.home_team_id), await db.get(Team, fixture.away_team_id)
+    warnings = ["Odds are snapshotted for analysis; this action does not place a wager."]
+    if existing:
+        warnings.append("This ticket contains another selection from the same fixture; markets may be correlated.")
     return payload, {
         "summary":f"Add {odds.market} / {odds.outcome} at decimal odds {Decimal(odds.decimal_odds):.2f}",
         "fixture":{"id":fixture.id,"home":home.name if home else "Unknown","away":away.name if away else "Unknown","kickoff_at":kickoff.isoformat()},
         "source":{"provider":odds.provider,"bookmaker":odds.bookmaker,"observed_at":observed.isoformat(),"observed_at_precision":odds.observed_at_precision,"market_odds_id":odds.id},
-        "warnings":["Odds are snapshotted for analysis; this action does not place a wager."],
+        "warnings":warnings,
     }
 
 @router.get("")
@@ -246,8 +249,6 @@ async def confirm_action(body: ConfirmBody, idempotency_key: str = Header(..., a
     now = int(datetime.now(timezone.utc).timestamp())
     if token.get("v") != 1 or token.get("session_id") != session.id:
         raise HTTPException(403, detail={"code":"confirmation_session_mismatch","message":"Sign in again to confirm this action."})
-    if not isinstance(token.get("expires_at"), int) or token["expires_at"] < now:
-        raise HTTPException(410, detail={"code":"confirmation_expired","message":"Confirmation expired. Preview again."})
     action, payload, nonce = token.get("action"), token.get("payload"), token.get("nonce")
     if not isinstance(action,str) or not isinstance(payload,dict) or not isinstance(nonce,str):
         raise HTTPException(400, detail={"code":"invalid_confirmation_token","message":"Confirmation token payload is invalid."})
@@ -261,6 +262,8 @@ async def confirm_action(body: ConfirmBody, idempotency_key: str = Header(..., a
         if replay.request_hash != request_hash:
             raise HTTPException(409, detail={"code":"idempotency_conflict","message":"Confirmation key was used for another request."})
         return replay.response_body
+    if not isinstance(token.get("expires_at"), int) or token["expires_at"] < now:
+        raise HTTPException(410, detail={"code":"confirmation_expired","message":"Confirmation expired. Preview again."})
     payload, _ = await _validate_action(action,payload,db)
     try:
         if action == "create_ticket":
