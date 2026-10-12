@@ -24,8 +24,8 @@
 | 7 Tickets | Partial implementation | Draft create/add/remove/archive, signed two-minute confirmation, session binding, CSRF, required Idempotency-Key, revision history and CSV export. No split/optimizer, multiple export formats or wager placement. |
 | 8 Screenshot import | Partial implementation | Validated image upload, immutable originals, SHA-256 deduplication, Tesseract OCR, conservative candidate extraction and explicit review/reject workflow. No automatic odds/ticket writes; screenshot-to-market linking remains. |
 | 9 Booking codes | Models only | No integration state machine or real integrations. |
-| 10 History/settings | Models added | No evaluation/retention/export workflow. |
-| 11 Hardening | Not started | Audits and E2E are configured but unexecuted. |
+| 10 History/settings | Partial implementation | Paginated prediction history UI/API, post-match evaluation, strict pre-kickoff cutoff guards, one evaluation per prediction, Brier/log-loss/accuracy metrics and idempotent evaluation trigger. Settings/retention controls remain. |
+| 11 Hardening | Partial implementation; unverified | Owner-only access, CSRF, Argon2id, login lockout, CSP/security headers, API rate limits, upload validation, idempotency and formula-safe CSV export are present. Automated security/E2E audits remain unexecuted. |
 | 12 Documentation | In progress | Setup, provider, ADR, test and model status docs added; deployment/restore docs incomplete. |
 
 ## Immediate next actions
@@ -33,4 +33,4 @@
 2. Execute Alembic upgrade/downgrade/check against PostgreSQL 18 to validate the frozen migration.
 3. Persist raw provider payloads, add quota/TTL caching, improve cross-provider canonical fixture identity and schedule idempotent jobs.
 4. Import sufficient historical results, run the walk-forward CLI and review a data-backed model report.
-5. Continue analysis/odds, tickets, AI, screenshot, booking-code, settings and deployment phases.
+5. Review CI and migrations, then finish live odds/booking-provider integrations (requires supported provider credentials and terms review), screenshot-to-market linking, settings/retention and deployment/restore checks.
