@@ -68,6 +68,7 @@ export default function HomePage() {
         <article className="tool-card"><ChartNoAxesCombined/><h3>Match Analysis</h3><p>Review stored model estimates, expected goals, scorelines and observed odds snapshots.</p><span className="coming-label">Stored predictions only</span><a className="text-link" href="/explorer">Choose a fixture →</a></article>
         <article className="tool-card"><Bot/><h3>AI Assistant</h3><p>Ask questions grounded in stored fixtures, team form and predictions.</p><span className="coming-label">Backend LLM key required</span><a className="text-link" href="/chat">Open assistant →</a></article>
         <article className="tool-card"><Activity/><h3>System status</h3><p>Backend liveness: {health?.status ?? (healthError ? "unavailable" : "checking")}.</p><span className="coming-label">Readiness checks available</span></article>
+        <article className="tool-card"><CalendarDays/><h3>Ticket manager</h3><p>Build a draft from stored market odds, review snapshots and export CSV.</p><span className="coming-label">Preview + confirm required</span><a className="text-link" href="/tickets">Open tickets →</a></article>
       </div></section><footer>Owner-only workspace · No automatic wager placement · No outcome guarantees</footer>
   </main>;
 }
