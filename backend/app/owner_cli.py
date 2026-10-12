@@ -3,9 +3,9 @@ import argparse
 import asyncio
 from getpass import getpass
 from argon2 import PasswordHasher
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from app.db import SessionLocal
-from app.models import OwnerAccount
+from app.models import OwnerAccount, Session, utcnow
 
 hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2)
 
@@ -26,8 +26,8 @@ async def provision(reset: bool) -> None:
             raise SystemExit("An owner already exists. Use reset-owner-password to rotate it.")
         if owner:
             owner.password_hash = hasher.hash(password)
-            from app.models import utcnow
             owner.password_changed_at = utcnow()
+            await db.execute(delete(Session))
         else:
             db.add(OwnerAccount(id=1, password_hash=hasher.hash(password)))
         await db.commit()
