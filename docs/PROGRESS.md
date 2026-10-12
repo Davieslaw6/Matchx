@@ -18,7 +18,7 @@
 | 1 Foundation | Files added; execution pending | CI has been expanded but no run is confirmed. |
 | 2 Data and access | Implemented in repository; verification pending | Login/session/CSRF code and UI exist; tests are unexecuted. |
 | 3 Sports data | Partial implementation | Adapter, CSV importer, resolver, sync service and explorer API/UI exist. Raw provider bytes, quota/TTL cache, complete canonical cross-provider identity and scheduled jobs remain. |
-| 4 Prediction | M0 + M1 code added; unverified | Dixon-Coles fitter and decay CV helper added; no real backtest, market baseline, leakage execution or report results. |
+| 4 Prediction | M0 + M1 code added; unverified | Dixon-Coles fitter, decay CV helper, walk-forward metrics, paired baselines and DB-backed report CLI added; no real historical backtest has been run. |
 | 5 AI chat | Not started | No LLM/tool orchestration. |
 | 6 Analysis/odds | Partial | Explorer available; detailed analysis, odds ingestion and freshness handling absent. |
 | 7 Tickets | Models only | No ticket service, confirmation tokens, split/optimizer or exports. |
@@ -32,5 +32,5 @@
 1. Obtain actual CI run results for draft PR #1 and fix all failures.
 2. Execute Alembic upgrade/downgrade/check against PostgreSQL 16 to validate the frozen migration.
 3. Persist raw provider payloads, add quota/TTL caching, improve cross-provider canonical fixture identity and schedule idempotent jobs.
-4. Load historical results from the database, run the real walk-forward evaluation and generate a data-backed model report.
+4. Import sufficient historical results, run the walk-forward CLI and review a data-backed model report.
 5. Continue analysis/odds, tickets, AI, screenshot, booking-code, settings and deployment phases.
