@@ -98,7 +98,7 @@ export default function ExplorerPage() {
               <div className="fixture-meta"><span>{fixture.competition}</span><span className="status-pill">{fixture.status}</span></div>
               <h2>{fixture.home_team} <span>vs</span> {fixture.away_team}</h2>
               <p>{fixture.match_date ?? "Match date unavailable"} · {formatKickoff(fixture.kickoff_at)}</p>
-              <span className="coming-label">{fixture.prediction_available ? "Prediction stored" : "No prediction stored"}</span>
+              <div className="fixture-actions"><span className="coming-label">{fixture.prediction_available ? "Prediction stored" : "No prediction stored"}</span><Link href={`/analysis/${encodeURIComponent(fixture.id)}`} className="text-link">Analyze match →</Link></div>
             </article>)}
           </div>
           <div className="pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>Previous</button><span>Page {page} of {Math.max(1, Math.ceil(data.total / data.page_size))}</span><button type="button" disabled={page * data.page_size >= data.total || loading} onClick={() => setPage((current) => current + 1)}>Next</button></div>
