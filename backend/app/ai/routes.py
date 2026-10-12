@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.provider import LLMProviderError, OpenAIResponsesProvider
@@ -30,7 +31,19 @@ async def _consume_chat_quota(db: AsyncSession) -> None:
         db.add(ApiQuotaUsage(provider="llm_chat", period_start=hour, calls=1))
     else:
         usage.calls += 1
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        usage = await db.scalar(select(ApiQuotaUsage).where(
+            ApiQuotaUsage.provider == "llm_chat", ApiQuotaUsage.period_start == hour
+        ).with_for_update())
+        if usage is None or usage.calls >= CHAT_REQUESTS_PER_HOUR:
+            raise HTTPException(status_code=429, detail={
+                "code":"ai_rate_limit", "message":"AI request limit reached for this hour. Try again later."
+            })
+        usage.calls += 1
+        await db.commit()
 
 class ChatBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
