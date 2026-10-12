@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     session_secret: SecretStr = SecretStr("development-only-change-me")  # nosec B105: rejected in production
     provider_api_key: SecretStr | None = None
     llm_api_key: SecretStr | None = None
+    llm_model: str = "gpt-5-mini"
+    llm_base_url: str = "https://api.openai.com/v1"
 
     def validate_public_bind(self) -> None:
         public_bind = self.host not in {"127.0.0.1", "::1", "localhost"}
