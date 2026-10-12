@@ -5,7 +5,7 @@ import hmac
 import secrets
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerificationError, VerifyMismatchError
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -30,6 +30,10 @@ class LoginBody(BaseModel):
 def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
+def _aware(value: datetime) -> datetime:
+    # SQLite can return naive datetimes even when the column is timezone-aware.
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+
 def _ip_key(request: Request) -> str:
     # Do not trust X-Forwarded-For unless a trusted-proxy policy is configured.
     ip = request.client.host if request.client else "unknown"
@@ -42,7 +46,7 @@ async def require_owner(request: Request, db: AsyncSession = Depends(get_db)) ->
         raise HTTPException(status_code=401, detail={"code":"authentication_required","message":"Sign in to continue."})
     session = await db.scalar(select(Session).where(Session.token_hash == _digest(token)))
     now = datetime.now(timezone.utc)
-    if not session or session.expires_at <= now:
+    if not session or _aware(session.expires_at) <= now:
         if session:
             await db.delete(session)
             await db.commit()
@@ -65,17 +69,17 @@ async def login(body: LoginBody, request: Request, response: Response, db: Async
     now = datetime.now(timezone.utc)
     key = _ip_key(request)
     attempt = await db.get(LoginAttempt, key)
-    if attempt and attempt.locked_until and attempt.locked_until > now:
+    if attempt and attempt.locked_until and _aware(attempt.locked_until) > now:
         raise HTTPException(status_code=429, detail={"code":"login_rate_limited","message":"Too many failed attempts. Try again later."})
     owner = await db.scalar(select(OwnerAccount).limit(1))
     valid = False
     if owner:
         try:
             valid = _hasher.verify(owner.password_hash, body.password)
-        except (VerifyMismatchError, VerificationError):
+        except (InvalidHashError, VerifyMismatchError, VerificationError):
             valid = False
     if not valid:
-        if not attempt or now - attempt.window_started_at > FAILURE_WINDOW:
+        if not attempt or now - _aware(attempt.window_started_at) > FAILURE_WINDOW:
             attempt = LoginAttempt(key_hash=key, failures=0, window_started_at=now)
             db.add(attempt)
         attempt.failures += 1
@@ -91,8 +95,7 @@ async def login(body: LoginBody, request: Request, response: Response, db: Async
                       expires_at=now + SESSION_TTL, last_seen_at=now)
     db.add(session)
     await db.commit()
-    settings = get_settings()
-    secure = settings.environment == "production"
+    secure = get_settings().environment == "production"
     response.set_cookie(COOKIE_NAME, raw_token, max_age=int(SESSION_TTL.total_seconds()),
                         httponly=True, secure=secure, samesite="lax", path="/")
     response.set_cookie(CSRF_COOKIE_NAME, csrf_token, max_age=int(SESSION_TTL.total_seconds()),
