@@ -1,10 +1,10 @@
 """Portable SQLAlchemy 2 models. Schema changes are managed only by Alembic."""
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 def utcnow() -> datetime:
@@ -81,6 +81,7 @@ class Fixture(Base, Timestamped):
     competition_id: Mapped[str] = mapped_column(ForeignKey("competitions.id"), nullable=False, index=True)
     home_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False, index=True)
     away_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False, index=True)
+    match_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     kickoff_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="scheduled", index=True)
     season: Mapped[str | None] = mapped_column(String(32))
