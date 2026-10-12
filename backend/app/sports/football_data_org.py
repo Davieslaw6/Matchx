@@ -1,6 +1,6 @@
 """football-data.org v4 adapter. Only returns provider-sourced, validated records."""
 import asyncio
-import random
+import secrets
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
@@ -93,7 +93,7 @@ class FootballDataOrgProvider:
                     if attempt >= self._max_retries:
                         response.raise_for_status()
                     retry_after = response.headers.get("Retry-After")
-                    delay = min(30.0, 0.5 * (2 ** attempt) + random.uniform(0, 0.35))
+                    delay = min(30.0, 0.5 * (2 ** attempt) + secrets.randbelow(350) / 1000.0)
                     if retry_after:
                         try:
                             delay = max(0.0, min(30.0, float(retry_after)))
@@ -102,7 +102,7 @@ class FootballDataOrgProvider:
                                 retry_date = parsedate_to_datetime(retry_after)
                                 delay = max(0.0, min(30.0, (retry_date - datetime.now(timezone.utc)).total_seconds()))
                             except (TypeError, ValueError, OverflowError):
-                                pass
+                                delay = min(30.0, 0.5 * (2 ** attempt) + secrets.randbelow(350) / 1000.0)
                     await asyncio.sleep(delay)
                     continue
                 if response.is_error:
@@ -120,7 +120,7 @@ class FootballDataOrgProvider:
                     # Short circuit cooldown is deliberately bounded; next request can retry later.
                     self._open_until = datetime.now(timezone.utc) + timedelta(seconds=30)
                 if attempt < self._max_retries:
-                    await asyncio.sleep(min(8.0, 0.35 * (2 ** attempt) + random.uniform(0, 0.2)))
+                    await asyncio.sleep(min(8.0, 0.35 * (2 ** attempt) + secrets.randbelow(200) / 1000.0))
         raise ProviderError(f"Provider request failed after bounded retries: {type(last_error).__name__ if last_error else 'unknown'}") from last_error
 
     async def competitions(self) -> list[dict[str, Any]]:
