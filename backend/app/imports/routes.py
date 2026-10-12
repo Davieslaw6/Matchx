@@ -52,9 +52,10 @@ async def upload_screenshot(
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(status_code=413, detail={"code":"image_too_large","message":"Image exceeds the 5 MiB limit."})
     try:
-        validate_image(data, file.content_type or "")
+        image_format, _, _ = validate_image(data, file.content_type or "")
     except ImageValidationError as exc:
         raise HTTPException(status_code=415, detail={"code":"unsupported_image","message":str(exc)}) from exc
+    normalized_mime = {"PNG":"image/png","JPEG":"image/jpeg","WEBP":"image/webp"}[image_format]
     digest = hashlib.sha256(data).hexdigest()
     existing = await db.scalar(select(ScreenshotImport).where(ScreenshotImport.sha256 == digest))
     if existing:
@@ -72,7 +73,7 @@ async def upload_screenshot(
         status, error = "ocr_failed", "OCR failed. The original image was retained for manual review."
 
     parsed = extract_candidates(text)
-    item = ScreenshotImport(filename=_filename(file.filename), mime_type=file.content_type or "",
+    item = ScreenshotImport(filename=_filename(file.filename), mime_type=normalized_mime,
         sha256=digest, image_data=data, status=status, ocr_text=text, parsed_data=parsed,
         error_message=error)
     db.add(item)
