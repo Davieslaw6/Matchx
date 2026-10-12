@@ -3,6 +3,7 @@ import csv
 from datetime import date, datetime, time, timezone
 from io import StringIO
 from typing import Any
+from zoneinfo import ZoneInfo
 
 class CsvImportError(ValueError):
     pass
@@ -16,6 +17,16 @@ def _parse_date(raw: str) -> date:
         except ValueError:
             continue
     raise CsvImportError(f"Unsupported match date format: {raw!r}")
+
+def _parse_kickoff(match_date: date, raw_time: str | None) -> datetime | None:
+    if not raw_time or not raw_time.strip():
+        return None
+    try:
+        local_time = time.fromisoformat(raw_time.strip())
+    except ValueError as exc:
+        raise CsvImportError(f"Unsupported kickoff time format: {raw_time!r}") from exc
+    local = datetime.combine(match_date, local_time, tzinfo=ZoneInfo("Europe/London"))
+    return local.astimezone(timezone.utc)
 
 def parse_results_csv(content: bytes, *, competition_code: str | None = None) -> list[dict[str, Any]]:
     """Parse only rows with complete, internally consistent final-score data."""
@@ -43,6 +54,7 @@ def parse_results_csv(content: bytes, *, competition_code: str | None = None) ->
             home_goals = int((row.get("FTHG") or "").strip())
             away_goals = int((row.get("FTAG") or "").strip())
             match_date = _parse_date(row.get("Date") or "")
+            kickoff = _parse_kickoff(match_date, row.get("Time"))
         except (ValueError, CsvImportError) as exc:
             raise CsvImportError(f"Invalid result row at line {line_number}: {exc}") from exc
         if not home or not away or home.casefold() == away.casefold() or min(home_goals, away_goals) < 0:
@@ -51,9 +63,6 @@ def parse_results_csv(content: bytes, *, competition_code: str | None = None) ->
         actual_result = (row.get("FTR") or "").strip().upper()
         if actual_result != expected_result:
             raise CsvImportError(f"FTR conflicts with score at line {line_number}.")
-        kickoff = datetime.combine(match_date, time(12, 0), tzinfo=timezone.utc)
-        # The CSV's date often lacks kickoff time. Noon UTC is a deterministic placeholder,
-        # not a verified kickoff; callers must retain kickoff_precision='date_only'.
         records.append({
             "provider": "football-data.co.uk",
             "provider_fixture_id": f"{division}:{match_date.isoformat()}:{home}:{away}",
@@ -62,7 +71,7 @@ def parse_results_csv(content: bytes, *, competition_code: str | None = None) ->
             "away_team_name": away,
             "match_date": match_date,
             "kickoff_at": kickoff,
-            "kickoff_precision": "date_only",
+            "kickoff_precision": "time_and_timezone" if kickoff else "date_only",
             "home_goals": home_goals,
             "away_goals": away_goals,
             "result": expected_result,
