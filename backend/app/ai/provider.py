@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.grounding import verify_numeric_grounding
 from app.ai.tools import ToolRegistry
 from app.config import Settings
 
@@ -70,13 +71,15 @@ class OpenAIResponsesProvider:
 
     async def answer(self, history: list[dict[str, str]], db: AsyncSession) -> LLMResult:
         inputs: list[dict[str, Any]] = [
-            {"role": message["role"], "content": message["content"]}
+            {"role": message["role"], "content": message["content"][:3000]}
             for message in history[-20:]
             if message.get("role") in {"user", "assistant"} and isinstance(message.get("content"), str)
         ]
         tool_trace: list[dict[str, Any]] = []
+        tool_results: list[dict[str, Any]] = []
         sources: dict[str, dict[str, Any]] = {}
         call_count = 0
+        grounding_retry = False
         async with httpx.AsyncClient(timeout=httpx.Timeout(25.0, connect=5.0)) as client:
             previous_response_id: str | None = None
             for round_index in range(self._max_rounds + 1):
@@ -118,7 +121,26 @@ class OpenAIResponsesProvider:
                     answer = _extract_text(payload)
                     if not answer:
                         raise LLMProviderError("LLM provider returned no text answer.")
-                    return LLMResult(answer, tool_trace, list(sources.values()), self._model)
+                    if verify_numeric_grounding(answer, tool_results):
+                        return LLMResult(answer, tool_trace, list(sources.values()), self._model)
+                    response_id = payload.get("id")
+                    if not grounding_retry and isinstance(response_id, str) and round_index < self._max_rounds:
+                        grounding_retry = True
+                        previous_response_id = response_id
+                        inputs = [{
+                            "role": "user",
+                            "content": "The previous answer contained numeric or date claims that failed the grounding check. Rewrite using only exact values supported by the retrieved tool results. If a value is not supported, state that it is unavailable. Do not add new numbers or dates.",
+                        }]
+                        continue
+                    if not tool_results:
+                        fallback = "I could not verify a fully grounded answer, and no MATCH X records were retrieved. Ask about a specific stored fixture or team."
+                    else:
+                        fallback = "I could not verify every numeric/date claim in the generated explanation. Retrieved MATCH X data (JSON): " + json.dumps(tool_results, ensure_ascii=False)[:1500]
+                    return LLMResult(fallback, tool_trace, list(sources.values()), self._model)
+                if round_index >= self._max_rounds:
+                    fallback = ("I could not complete a grounded answer within the tool-call limit. "
+                                + (json.dumps(tool_results, ensure_ascii=False)[:1500] if tool_results else "No application records were retrieved."))
+                    return LLMResult(fallback, tool_trace, list(sources.values()), self._model)
                 if not isinstance(response_id, str):
                     raise LLMProviderError("LLM provider omitted response identity during tool use.")
                 previous_response_id = response_id
@@ -135,6 +157,7 @@ class OpenAIResponsesProvider:
                                                   "message": "Tool budget exhausted; answer only from prior retrieved data."}
                     else:
                         result = await self._registry.dispatch(name, raw_arguments, db)
+                    tool_results.append(result)
                     tool_trace.append({"name": name, "status": result.get("status", "unknown")})
                     for key in ("fixture_id", "team_id"):
                         value = result.get(key)
