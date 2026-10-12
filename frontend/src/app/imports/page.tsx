@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 type OddsCandidate = { line_number: number; line: string; numeric_candidates: number[]; status: string };
@@ -123,7 +124,7 @@ export default function ScreenshotImportsPage() {
         <section className="screenshot-detail">
           {!selected ? <div className="empty-state"><h2>Select an import</h2><p>Uploaded images and OCR output are retained privately for manual review.</p></div> : <>
             <div className="screenshot-detail-header"><div><p className="eyebrow">{selected.status.toUpperCase()}</p><h2>{selected.filename}</h2><p>{selected.byte_size} bytes · SHA-256 {selected.sha256_prefix}…</p></div><a href={`/api/v1/imports/screenshots/${encodeURIComponent(selected.id)}/image`} target="_blank" rel="noreferrer" className="text-link">Open original image ↗</a></div>
-            <div className="screenshot-image-frame"><img src={`/api/v1/imports/screenshots/${encodeURIComponent(selected.id)}/image`} alt={selected.filename} /></div>
+            <div className="screenshot-image-frame"><Image unoptimized width={1200} height={900} src={`/api/v1/imports/screenshots/${encodeURIComponent(selected.id)}/image`} alt={selected.filename} style={{ maxWidth: "100%", height: "auto" }} /></div>
             {selected.error_message ? <p className="inline-error">{selected.error_message}</p> : null}
             <section className="ocr-section"><h3>OCR text</h3><pre>{selected.ocr_text || "No OCR text was extracted. Review the original image manually."}</pre></section>
             <section className="ocr-section"><h3>Possible match lines</h3>{selected.parsed_data.match_candidates?.length ? selected.parsed_data.match_candidates.map((candidate, index) => <p key={`${candidate.line}-${index}`}>{candidate.home_candidate} vs {candidate.away_candidate} <span className="coming-label">Unverified</span></p>) : <p className="empty-copy">No match lines identified.</p>}</section>
