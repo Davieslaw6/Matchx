@@ -2,6 +2,7 @@
 from datetime import date, datetime, timezone
 import asyncio
 import random
+from datetime import timedelta
 from email.utils import parsedate_to_datetime
 from typing import Any
 
@@ -68,6 +69,9 @@ class FootballDataOrgProvider:
         return self
 
     async def __aexit__(self, *_):
+        await self.aclose()
+
+    async def aclose(self) -> None:
         if self._owns_client and self._client is not None:
             await self._client.aclose()
             self._client = None
@@ -113,11 +117,8 @@ class FootballDataOrgProvider:
                 last_error = exc
                 self._failure_count += 1
                 if self._failure_count >= 5:
-                    self._open_until = datetime.now(timezone.utc).replace(microsecond=0)
-                    self._open_until = self._open_until.replace(second=self._open_until.second) 
                     # Short circuit cooldown is deliberately bounded; next request can retry later.
-                    from datetime import timedelta
-                    self._open_until += timedelta(seconds=30)
+                    self._open_until = datetime.now(timezone.utc) + timedelta(seconds=30)
                 if attempt < self._max_retries:
                     await asyncio.sleep(min(8.0, 0.35 * (2 ** attempt) + random.uniform(0, 0.2)))
         raise ProviderError(f"Provider request failed after bounded retries: {type(last_error).__name__ if last_error else 'unknown'}") from last_error
@@ -202,9 +203,8 @@ class FootballDataOrgProvider:
     async def match_statistics(self, fixture_id: str) -> Unsupported:
         return Unsupported("match_statistics", "football-data.org adapter does not expose this capability.")
 
-    async def head_to_head(self, home_team_id: str, away_team_id: str) -> list[dict[str, Any]]:
-        # H2H is fixture-specific in this provider; do not guess an endpoint or fabricate results.
-        return []
+    async def head_to_head(self, home_team_id: str, away_team_id: str) -> Unsupported:
+        return Unsupported("head_to_head", "No verified H2H endpoint is implemented in this adapter.")
 
     async def odds(self, fixture_id: str) -> Unsupported:
         return Unsupported("odds", "Odds are not available from this adapter.")
