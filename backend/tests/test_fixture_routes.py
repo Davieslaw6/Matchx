@@ -7,3 +7,8 @@ def test_fixture_explorer_requires_owner_session():
     response = client.get("/api/v1/fixtures")
     assert response.status_code == 401
     assert response.json()["code"] == "authentication_required"
+
+def test_fixture_detail_requires_owner_session():
+    response = client.get("/api/v1/fixtures/not-a-real-id")
+    assert response.status_code == 401
+    assert response.json()["code"] == "authentication_required"
