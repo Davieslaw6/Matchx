@@ -323,7 +323,6 @@ def downgrade() -> None:
     op.drop_table("team_aliases")
     op.drop_table("teams")
     op.drop_table("competitions")
-    op.drop_index("ix_login_attempts_key_hash", table_name="login_attempts")
     op.drop_table("login_attempts")
     op.drop_index("ix_sessions_expires_at", table_name="sessions")
     op.drop_table("sessions")
