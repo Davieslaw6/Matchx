@@ -39,7 +39,11 @@ For a bounded football-data.org sync, set PROVIDER_API_KEY in backend/.env and r
 
     python -m app.sports.sync_football_data --start 2026-10-01 --end 2026-10-14 --competition PL
 
-After importing enough historical results, run a chronological backtest for an internal competition UUID:
+After importing enough historical results, generate pre-kickoff predictions for an internal competition UUID (requires at least 65 completed pre-cutoff matches):
+
+    python -m app.prediction.generate_predictions --competition-id YOUR_COMPETITION_UUID
+
+Then run a chronological backtest for that competition:
 
     python -m app.prediction.backtest_cli --competition-id YOUR_COMPETITION_UUID --cutoff 2026-10-01
 
