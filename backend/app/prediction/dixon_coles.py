@@ -46,11 +46,11 @@ class DixonColesModel:
                     * self.defence_vulnerability[away_team] * self.home_advantage
         away_rate = self.league_away_goals * self.attack_strength[away_team] \
                     * self.defence_vulnerability[home_team]
-        if not (0 < home_rate <= 12 and 0 < away_rate <= 12):
-            raise ModelFitError("Unsupported expected-goal rate outside the score-grid domain.")
+        if not (0 < home_rate <= 8 and 0 < away_rate <= 8):
+            raise ModelFitError("Unsupported expected-goal rate above 8.0 for the configured score grid.")
         return home_rate, away_rate
 
-    def scoreline_grid(self, home_team: str, away_team: str, cap: int = 10) -> ScorelineGrid:
+    def scoreline_grid(self, home_team: str, away_team: str, cap: int = 20) -> ScorelineGrid:
         home_rate, away_rate = self.expected_goals(home_team, away_team)
         grid = build_scoreline_grid(home_rate, away_rate, cap)
         corrected: dict[tuple[int, int], float] = {}
