@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Activity, Bot, CalendarDays, ChartNoAxesCombined } from "lucide-react";
 
 type Health = { status?: string; service?: string; readiness?: string };
@@ -64,11 +65,11 @@ export default function HomePage() {
     <section className="hero"><p className="eyebrow">YOUR ANALYSIS WORKSPACE</p><h2>Understand the match.<br/><span>Measure the uncertainty.</span></h2><p className="hero-copy">Explore fixtures, compare statistical estimates with market prices, and keep every analysis grounded in traceable data.</p></section>
     <section aria-labelledby="workspace-heading"><div className="section-heading"><div><p className="eyebrow">WORKSPACE</p><h2 id="workspace-heading">Analysis tools</h2></div></div>
       <div className="tool-grid">
-        <article className="tool-card"><CalendarDays/><h3>Match Explorer</h3><p>Find fixtures by date, competition, team and match status.</p><span className="coming-label">Imported data only</span><a className="text-link" href="/explorer">Open explorer →</a></article>
-        <article className="tool-card"><ChartNoAxesCombined/><h3>Match Analysis</h3><p>Review stored model estimates, expected goals, scorelines and observed odds snapshots.</p><span className="coming-label">Stored predictions only</span><a className="text-link" href="/explorer">Choose a fixture →</a></article>
-        <article className="tool-card"><Bot/><h3>AI Assistant</h3><p>Ask questions grounded in stored fixtures, team form and predictions.</p><span className="coming-label">Backend LLM key required</span><a className="text-link" href="/chat">Open assistant →</a></article>
+        <article className="tool-card"><CalendarDays/><h3>Match Explorer</h3><p>Find fixtures by date, competition, team and match status.</p><span className="coming-label">Imported data only</span><Link className="text-link" href="/explorer">Open explorer →</Link></article>
+        <article className="tool-card"><ChartNoAxesCombined/><h3>Match Analysis</h3><p>Review stored model estimates, expected goals, scorelines and observed odds snapshots.</p><span className="coming-label">Stored predictions only</span><Link className="text-link" href="/explorer">Choose a fixture →</Link></article>
+        <article className="tool-card"><Bot/><h3>AI Assistant</h3><p>Ask questions grounded in stored fixtures, team form and predictions.</p><span className="coming-label">Backend LLM key required</span><Link className="text-link" href="/chat">Open assistant →</Link></article>
         <article className="tool-card"><Activity/><h3>System status</h3><p>Backend liveness: {health?.status ?? (healthError ? "unavailable" : "checking")}.</p><span className="coming-label">Readiness checks available</span></article>
-        <article className="tool-card"><CalendarDays/><h3>Ticket manager</h3><p>Build a draft from stored market odds, review snapshots and export CSV.</p><span className="coming-label">Preview + confirm required</span><a className="text-link" href="/tickets">Open tickets →</a></article>
+        <article className="tool-card"><CalendarDays/><h3>Ticket manager</h3><p>Build a draft from stored market odds, review snapshots and export CSV.</p><span className="coming-label">Preview + confirm required</span><Link className="text-link" href="/tickets">Open tickets →</Link></article>
       </div></section><footer>Owner-only workspace · No automatic wager placement · No outcome guarantees</footer>
   </main>;
 }
