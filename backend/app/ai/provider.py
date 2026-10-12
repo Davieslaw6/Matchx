@@ -171,7 +171,8 @@ class OpenAIResponsesProvider:
                             if isinstance(fixture, dict) and isinstance(fixture.get("fixture_id"), str):
                                 source_id = fixture["fixture_id"]
                                 sources[source_id] = {"type": "fixture", "id": source_id}
-                    await db.rollback()
+                    if db is not None:
+                        await db.rollback()
                     output_text = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
                     outputs.append({"type": "function_call_output", "call_id": call_id,
                                     "output": output_text[:8000]})
