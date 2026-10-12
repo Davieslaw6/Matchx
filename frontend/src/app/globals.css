@@ -185,3 +185,9 @@ footer { color: var(--muted); font-size: 11px; border-top: 1px solid var(--borde
 .ticket-revisions article { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
 .ticket-revisions article span, .ticket-revisions > p { color: var(--muted); }
 @media (max-width: 800px) { .ticket-layout { grid-template-columns: 1fr; } .ticket-sidebar { order: 2; } .ticket-detail { order: 1; } .ticket-stats { grid-template-columns: 1fr; } .ticket-selection { align-items: start; flex-direction: column; } }
+
+.ticket-add-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0; color: var(--muted); font-size: 12px; }
+.ticket-add-controls select { max-width: 320px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
+.ticket-add-controls a, .ticket-notice a { color: var(--accent); }
+.ticket-notice { margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; }
+.odds-row button { white-space: nowrap; }
