@@ -1,19 +1,56 @@
 services:
   postgres:
-    image: postgres:16
-    restart: unless-stopped
+    image: postgres:18-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-matchx}
-      POSTGRES_USER: ${POSTGRES_USER:-matchx}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      POSTGRES_DB: matchx
+      POSTGRES_USER: matchx
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the root .env file}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - matchx_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-matchx} -d ${POSTGRES_DB:-matchx}"]
+      test: ["CMD-SHELL", "pg_isready -U matchx -d matchx"]
       interval: 5s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      ENVIRONMENT: production
+      HOST: 0.0.0.0
+      PORT: 8000
+      OWNER_EXISTS: ${OWNER_EXISTS:-true}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in the root .env file}
+      DATABASE_URL: postgresql+asyncpg://matchx:${POSTGRES_PASSWORD}@postgres:5432/matchx
+      ALLOWED_ORIGIN: http://127.0.0.1:3000
+      PROVIDER_API_KEY: ${PROVIDER_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-5-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        MATCHX_BACKEND_ORIGIN: http://backend:8000
+    environment:
+      MATCHX_BACKEND_ORIGIN: http://backend:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
-  matchx_postgres_data:
+  postgres_data:
