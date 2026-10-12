@@ -5,7 +5,7 @@ import hmac
 import secrets
 
 from argon2 import PasswordHasher
-from argon2.exceptions import InvalidHashError, VerificationError
+from argon2.exceptions import VerificationError
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -76,7 +76,7 @@ async def login(body: LoginBody, request: Request, response: Response, db: Async
     if owner:
         try:
             valid = _hasher.verify(owner.password_hash, body.password)
-        except (InvalidHashError, VerificationError):
+        except VerificationError:
             valid = False
     if not valid:
         if not attempt or now - _aware(attempt.window_started_at) > FAILURE_WINDOW:
