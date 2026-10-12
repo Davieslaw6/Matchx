@@ -110,6 +110,7 @@ async def session_status(session: Session = Depends(require_owner)):
 async def logout(response: Response, session: Session = Depends(require_csrf), db: AsyncSession = Depends(get_db)):
     await db.delete(session)
     await db.commit()
-    response.delete_cookie(COOKIE_NAME, path="/", httponly=True, samesite="lax")
-    response.delete_cookie(CSRF_COOKIE_NAME, path="/", httponly=False, samesite="lax")
+    secure = get_settings().environment == "production"
+    response.delete_cookie(COOKIE_NAME, path="/", httponly=True, secure=secure, samesite="lax")
+    response.delete_cookie(CSRF_COOKIE_NAME, path="/", httponly=False, secure=secure, samesite="lax")
     return {"authenticated": False}
