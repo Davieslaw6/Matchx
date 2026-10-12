@@ -35,7 +35,7 @@ async def test_provider_handles_function_call_and_returns_final_answer():
         result = await provider.answer([{"role": "user", "content": "Find Arsenal fixtures."}], db=None)
     assert result.text == "The database returned 2 fixtures."
     assert result.tool_calls == [{"name": "search_fixtures", "status": "ok"}]
-    assert mock.call_count == 2
+    assert len(mock.calls) == 2
 
 def test_provider_requires_server_side_api_key():
     with pytest.raises(LLMProviderError, match="not configured"):
