@@ -26,7 +26,7 @@ services:
       OWNER_EXISTS: ${OWNER_EXISTS:-true}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in the root .env file}
       DATABASE_URL: postgresql+asyncpg://matchx:${POSTGRES_PASSWORD}@postgres:5432/matchx
-      ALLOWED_ORIGIN: http://127.0.0.1:3000
+      ALLOWED_ORIGIN: http://localhost:3000
       PROVIDER_API_KEY: ${PROVIDER_API_KEY:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-gpt-5-mini}
