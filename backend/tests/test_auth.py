@@ -39,6 +39,8 @@ async def test_owner_login_session_and_csrf_logout(tmp_path):
             session = await client.get("/api/v1/auth/session")
             assert session.status_code == 200
             csrf = client.cookies.get("matchx_csrf")
+            rejected_logout = await client.post("/api/v1/auth/logout")
+            assert rejected_logout.status_code == 403
             logout = await client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": csrf})
             assert logout.status_code == 200
             assert logout.json()["authenticated"] is False
