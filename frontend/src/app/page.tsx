@@ -12,6 +12,20 @@ export default function HomePage() {
   const [health, setHealth] = useState<Health | null>(null);
   const [healthError, setHealthError] = useState(false);
 
+  async function signOut() {
+    const csrfCookie = document.cookie.split("; ").find((item) => item.startsWith("matchx_csrf="));
+    const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice("matchx_csrf=".length)) : "";
+    const response = await fetch("/api/v1/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "X-CSRF-Token": csrfToken },
+    });
+    if (response.ok) {
+      router.replace("/login");
+      router.refresh();
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/v1/auth/session", { credentials: "same-origin", signal: controller.signal })
@@ -46,7 +60,7 @@ export default function HomePage() {
 
   return <main className="dashboard">
     <header className="topbar"><div className="brand-mark" aria-hidden="true">MX</div><div><p className="eyebrow">PRIVATE FOOTBALL INTELLIGENCE</p><h1>MATCH X</h1></div>
-      <div className="service-status" aria-live="polite"><span className={health?.status === "ok" ? "status-dot" : "status-dot status-offline"} />{healthError ? "API unavailable" : health?.status === "ok" ? "API connected" : "Connecting to API"}</div></header>
+      <div className="service-status" aria-live="polite"><span className={health?.status === "ok" ? "status-dot" : "status-dot status-offline"} />{healthError ? "API unavailable" : health?.status === "ok" ? "API connected" : "Connecting to API"}</div><button className="logout-button" type="button" onClick={() => void signOut()}>Sign out</button></header>
     <section className="hero"><p className="eyebrow">YOUR ANALYSIS WORKSPACE</p><h2>Understand the match.<br/><span>Measure the uncertainty.</span></h2><p className="hero-copy">Explore fixtures, compare statistical estimates with market prices, and keep every analysis grounded in traceable data.</p></section>
     <section aria-labelledby="workspace-heading"><div className="section-heading"><div><p className="eyebrow">WORKSPACE</p><h2 id="workspace-heading">Analysis tools</h2></div></div>
       <div className="tool-grid">
