@@ -32,3 +32,21 @@ def test_unsupported_markets_are_explicit_not_empty_success():
     provider = FootballDataOrgProvider("test-token")
     assert isinstance(provider.capabilities.supports_odds, bool)
     assert provider.capabilities.supports_odds is False
+
+@pytest.mark.asyncio
+async def test_raw_payload_sink_receives_source_json_before_normalized_return():
+    stored = []
+    async def sink(payload):
+        stored.append(payload)
+    with respx.mock(base_url="https://api.football-data.org/v4") as mock:
+        mock.get("/competitions").mock(return_value=httpx.Response(200, json={
+            "competitions": [{"id": 2021, "code": "PL", "name": "Premier League",
+                              "area": {"name": "England"}}]
+        }))
+        async with httpx.AsyncClient() as client:
+            provider = FootballDataOrgProvider("test-token", client=client,
+                                               max_retries=0, raw_payload_sink=sink)
+            normalized = await provider.competitions()
+    assert normalized[0]["name"] == "Premier League"
+    assert stored[0]["payload"]["competitions"][0]["id"] == 2021
+    assert len(stored[0]["content_hash"]) == 64
