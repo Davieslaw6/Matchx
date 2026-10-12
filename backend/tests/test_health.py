@@ -14,7 +14,10 @@ def test_request_id_and_security_headers_are_set():
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
 
-def test_readiness_does_not_claim_database_is_ready():
+def test_readiness_checks_database_connectivity():
     response = client.get("/api/v1/health/ready")
-    assert response.status_code == 200
-    assert response.json()["status"] == "degraded"
+    assert response.status_code in (200, 503)
+    if response.status_code == 200:
+        assert response.json()["checks"]["database"] == "ok"
+    else:
+        assert response.json()["checks"]["database"] == "unavailable"
