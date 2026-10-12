@@ -19,16 +19,17 @@ async def sync_provider_window(provider: SportsDataProvider, start: date, end: d
         "results_inserted": 0, "results_updated": 0, "invalid_scores": 0,
     }
     try:
+        async def persist_raw_payload(item: dict[str, Any]) -> None:
+            async with SessionLocal() as raw_db:
+                raw_db.add(ProviderRawPayload(
+                    provider=item["provider"], data_type=item["data_type"],
+                    content_hash=item["content_hash"], payload=item["payload"],
+                    fetched_at=item["fetched_at"],
+                ))
+                await raw_db.commit()
+
         sink_setter = getattr(provider, "set_raw_payload_sink", None)
         if sink_setter is not None:
-            async def persist_raw_payload(item: dict[str, Any]) -> None:
-                async with SessionLocal() as raw_db:
-                    raw_db.add(ProviderRawPayload(
-                        provider=item["provider"], data_type=item["data_type"],
-                        content_hash=item["content_hash"], payload=item["payload"],
-                        fetched_at=item["fetched_at"],
-                    ))
-                    await raw_db.commit()
             sink_setter(persist_raw_payload)
         fixtures = await provider.fixtures(start, end, competition_code)
         results = await provider.results(start, end, competition_code)
