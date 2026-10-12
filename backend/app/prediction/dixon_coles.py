@@ -54,9 +54,10 @@ class DixonColesModel:
         grid = build_scoreline_grid(home_rate, away_rate, cap)
         corrected: dict[tuple[int, int], float] = {}
         for (home_goals, away_goals), probability in grid.probabilities.items():
-            corrected[(home_goals, away_goals)] = probability * _tau(
-                home_goals, away_goals, home_rate, away_rate, self.rho
-            )
+            correction = _tau(home_goals, away_goals, home_rate, away_rate, self.rho)
+            if correction <= 0:
+                raise ModelFitError("Dixon-Coles low-score correction is non-positive for this fixture.")
+            corrected[(home_goals, away_goals)] = probability * correction
         mass = sum(corrected.values())
         if mass <= 0 or not np.isfinite(mass):
             raise ModelFitError("Dixon-Coles correction produced invalid scoreline mass.")
