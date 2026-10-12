@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +17,7 @@ type Fixture = {
 };
 type FixturePage = { items: Fixture[]; page: number; page_size: number; total: number };
 type ApiError = { message?: string };
+type Filters = { startDate: string; endDate: string; team: string; status: string };
 
 export default function ExplorerPage() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function ExplorerPage() {
   const [endDate, setEndDate] = useState("");
   const [team, setTeam] = useState("");
   const [status, setStatus] = useState("");
+  const [applied, setApplied] = useState<Filters>({ startDate: "", endDate: "", team: "", status: "" });
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,10 +35,10 @@ export default function ExplorerPage() {
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ page: String(page), page_size: "25" });
-    if (startDate) params.set("start_date", startDate);
-    if (endDate) params.set("end_date", endDate);
-    if (team.trim()) params.set("team", team.trim());
-    if (status) params.set("status", status);
+    if (applied.startDate) params.set("start_date", applied.startDate);
+    if (applied.endDate) params.set("end_date", applied.endDate);
+    if (applied.team.trim()) params.set("team", applied.team.trim());
+    if (applied.status) params.set("status", applied.status);
     try {
       const response = await fetch(`/api/v1/fixtures?${params.toString()}`, {
         credentials: "same-origin",
@@ -55,7 +58,7 @@ export default function ExplorerPage() {
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [endDate, page, router, startDate, status, team]);
+  }, [applied, page, router]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -63,10 +66,10 @@ export default function ExplorerPage() {
     return () => controller.abort();
   }, [load]);
 
-  function applyFilters(event: React.FormEvent<HTMLFormElement>) {
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPage(1);
-    void load();
+    setApplied({ startDate, endDate, team, status });
   }
 
   return (
