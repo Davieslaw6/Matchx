@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from math import exp, log
+from math import exp
 from typing import Sequence
 
 import numpy as np
@@ -60,8 +60,11 @@ class DixonColesModel:
         mass = sum(corrected.values())
         if mass <= 0 or not np.isfinite(mass):
             raise ModelFitError("Dixon-Coles correction produced invalid scoreline mass.")
+        retained_mass = mass * grid.retained_mass
+        if retained_mass < 0.9999:
+            raise ModelFitError(f"Dixon-Coles grid retained only {retained_mass:.8f} probability mass.")
         normalised = {score: probability / mass for score, probability in corrected.items()}
-        return ScorelineGrid(normalised, mass * grid.retained_mass)
+        return ScorelineGrid(normalised, retained_mass)
 
 def _tau(home_goals: int, away_goals: int, home_rate: float, away_rate: float, rho: float) -> float:
     if home_goals == 0 and away_goals == 0:
@@ -180,6 +183,6 @@ def fit_dixon_coles(
         time_decay_days=time_decay_days,
         data_cutoff=cutoff,
         training_matches=len(matches),
-        weighted_log_likelihood=-float(fitted.fun),
+        weighted_log_likelihood=-float(fitted.fun) + l2_penalty * (float(np.sum(attacks ** 2)) + float(np.sum(defences ** 2)),
         optimizer_message=str(fitted.message),
     )
