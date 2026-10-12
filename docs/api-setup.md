@@ -29,6 +29,12 @@ The importer accepts complete decimal 1X2 triplets for Bet365 (B365H/D/A), Bet&W
 
 When the CSV supplies a kickoff time, odds are labelled `closing_at_kickoff`; when it is date-only, the importer stores an end-of-day UTC chronology convention labelled `date_only_closing`. The exact observation timestamp is not known for date-only rows, and those rows are excluded from the closing-market backtest. This is historical data, not a live odds feed.
 
+## Screenshot OCR and history
+
+The owner-only screenshot API accepts PNG, JPEG and WEBP images up to 5 MiB and 20 megapixels. Tesseract OCR is optional at runtime; if it is missing or times out, the original image is retained with an explicit failure state. Extracted numbers are unverified candidates only. A review action changes review status but never creates market odds, ticket selections or wagers. The Docker backend image installs Tesseract; local development needs the system executable.
+
+The owner-only history endpoint evaluates only stored predictions whose data cutoff and creation time are strictly before kickoff and whose final result has been imported. It records multiclass Brier score, log loss and top-outcome accuracy once per prediction. It does not establish profitability or guarantee future performance.
+
 ## LLM configuration
 The OpenAI Responses adapter, allowlisted read-only data tools, bounded tool loop, numeric/date grounding check, one regeneration attempt, fallback, and conversation persistence are implemented. Set LLM_API_KEY and LLM_MODEL in backend/.env; LLM_BASE_URL defaults to https://api.openai.com/v1. The live API is not configured or tested. OCR, news and provider responses are untrusted data. The LLM has no ticket mutation or wager-placement tools.
 
