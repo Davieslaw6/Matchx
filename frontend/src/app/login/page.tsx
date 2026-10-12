@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type ApiError = { detail?: { message?: string } | string };
+type ApiError = { message?: string; detail?: { message?: string } | string };
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function LoginPage() {
       const result = (await response.json()) as ApiError;
       if (!response.ok) {
         const message = typeof result.detail === "object" ? result.detail?.message : result.detail;
-        setError(message || "Sign-in failed. Check the password and try again.");
+        setError(result.message || message || "Sign-in failed. Check the password and try again.");
         return;
       }
       setPassword("");
