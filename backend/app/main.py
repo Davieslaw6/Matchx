@@ -47,7 +47,7 @@ app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allo
 
 @app.middleware("http")
 async def security_and_request_id(request: Request, call_next):
-    request_id = request.headers.get("X-Request-ID", str(uuid4()))
+    request_id = str(uuid4())
     request.state.request_id = request_id
     content_length = request.headers.get("content-length")
     if request.url.path == "/api/v1/imports/screenshots" and request.method == "POST" and content_length:
