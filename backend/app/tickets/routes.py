@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import func, select
@@ -236,11 +236,12 @@ async def preview_action(body: PreviewBody, session: Session = Depends(require_c
         "request_hash":_request_hash(body.action,payload),"nonce":secrets.token_urlsafe(18),
         "expires_at":int((now + timedelta(seconds=TOKEN_TTL)).timestamp())}
     return {"action":body.action,"payload":payload,"preview":preview,"confirmation_token":_sign(signed),
+        "idempotency_key":signed["nonce"],
         "expires_at":datetime.fromtimestamp(signed["expires_at"],timezone.utc).isoformat(),
         "confirmation_required":True}
 
 @router.post("/confirm")
-async def confirm_action(body: ConfirmBody, session: Session = Depends(require_csrf), db: AsyncSession = Depends(get_db)):
+async def confirm_action(body: ConfirmBody, idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=16, max_length=160), session: Session = Depends(require_csrf), db: AsyncSession = Depends(get_db)):
     token = _verify(body.confirmation_token)
     now = int(datetime.now(timezone.utc).timestamp())
     if token.get("v") != 1 or token.get("session_id") != session.id:
@@ -250,6 +251,8 @@ async def confirm_action(body: ConfirmBody, session: Session = Depends(require_c
     action, payload, nonce = token.get("action"), token.get("payload"), token.get("nonce")
     if not isinstance(action,str) or not isinstance(payload,dict) or not isinstance(nonce,str):
         raise HTTPException(400, detail={"code":"invalid_confirmation_token","message":"Confirmation token payload is invalid."})
+    if not hmac.compare_digest(nonce, idempotency_key):
+        raise HTTPException(400, detail={"code":"idempotency_key_mismatch","message":"Idempotency-Key must match the previewed action."})
     request_hash = _request_hash(action,payload)
     if not hmac.compare_digest(str(token.get("request_hash","")),request_hash):
         raise HTTPException(400, detail={"code":"confirmation_hash_mismatch","message":"Confirmation token failed integrity validation."})
