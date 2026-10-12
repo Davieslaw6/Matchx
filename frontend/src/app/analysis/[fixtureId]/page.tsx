@@ -39,7 +39,7 @@ type Detail = {
       retained_scoreline_mass: number;
     };
   } | null;
-  odds: { id: string; provider: string; bookmaker: string | null; market: string; outcome: string; decimal_odds: number; observed_at: string }[];
+  odds: { id: string; provider: string; bookmaker: string | null; market: string; outcome: string; decimal_odds: number; observed_at: string; observed_at_precision: string }[];
 };
 type ApiError = { message?: string; detail?: { message?: string } };
 type TicketOption = { id: string; name: string; status: string; selection_count: number };
@@ -219,7 +219,7 @@ export default function AnalysisPage() {
             <div className="odds-table">
               {detail.odds.map((odd) => <article className="odds-row" key={odd.id}>
                 <span>{odd.market} / {odd.outcome}</span><strong>{odd.decimal_odds.toFixed(2)}</strong>
-                <span>{odd.bookmaker ?? odd.provider}</span><time>{new Date(odd.observed_at).toLocaleString()}</time>
+                <span>{odd.bookmaker ?? odd.provider} · {odd.observed_at_precision}</span><time>{new Date(odd.observed_at).toLocaleString()}</time>
                 <button type="button" className="secondary-button" disabled={ticketBusy || !ticketId || detail.status !== "scheduled"} onClick={() => void previewAddSelection(odd)}>Preview add</button>
               </article>)}
             </div>
