@@ -23,7 +23,7 @@ services:
       ENVIRONMENT: production
       HOST: 0.0.0.0
       PORT: 8000
-      OWNER_EXISTS: ${OWNER_EXISTS:-true}
+      OWNER_EXISTS: ${OWNER_EXISTS:-false}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in the root .env file}
       DATABASE_URL: postgresql+asyncpg://matchx:${POSTGRES_PASSWORD}@postgres:5432/matchx
       ALLOWED_ORIGIN: http://localhost:3000
