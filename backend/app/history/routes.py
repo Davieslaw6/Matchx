@@ -1,8 +1,6 @@
 """Authenticated prediction history and idempotent post-match evaluation."""
 import hashlib
 import json
-from typing import Any
-
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
