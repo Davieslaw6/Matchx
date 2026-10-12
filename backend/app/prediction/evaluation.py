@@ -28,7 +28,7 @@ async def evaluate_finished_predictions(db: AsyncSession, *, limit: int = 500) -
     evaluated: list[dict[str, Any]] = []
     skipped = 0
     for prediction, fixture, result in rows:
-                raw = prediction.probabilities
+        raw = prediction.probabilities
         try:
             probs = {name: float(raw[name]) for name in OUTCOMES}
         except (KeyError, TypeError, ValueError):
