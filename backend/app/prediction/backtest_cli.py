@@ -49,7 +49,7 @@ async def load_observations(db: AsyncSession, competition_id: str) -> list[Match
     groups: dict[tuple[str, str, str, str, datetime], dict[int, float]] = {}
     for odds in odds_rows:
         fixture = fixtures.get(odds.fixture_id)
-        if fixture is None or fixture.kickoff_at is None:
+        if fixture is None or fixture.kickoff_at is None or odds.observed_at_precision == "date_only_closing":
             continue
         observed = _as_utc(odds.observed_at)
         kickoff = _as_utc(fixture.kickoff_at)
