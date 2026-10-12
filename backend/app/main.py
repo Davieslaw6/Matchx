@@ -1,9 +1,9 @@
 from contextlib import asynccontextmanager
 from uuid import uuid4
-import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import structlog
 from sqlalchemy import select, text
 from app.auth import router as auth_router
 from app.config import get_settings
