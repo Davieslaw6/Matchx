@@ -33,12 +33,24 @@ async def evaluate_finished_predictions(db: AsyncSession, *, limit: int = 500) -
             probs = {name: float(raw[name]) for name in OUTCOMES}
         except (KeyError, TypeError, ValueError):
             skipped += 1
+            db.add(PredictionEvaluation(prediction_id=prediction.id, metrics={
+                "status":"invalid_probability_snapshot", "reason":"Required 1X2 probabilities are missing or non-numeric.",
+                "model_version":prediction.model_version, "data_cutoff_at":prediction.data_cutoff_at.isoformat(),
+            }))
             continue
         if any(not math.isfinite(value) or value < 0 or value > 1 for value in probs.values()):
             skipped += 1
+            db.add(PredictionEvaluation(prediction_id=prediction.id, metrics={
+                "status":"invalid_probability_snapshot", "reason":"Probability is outside [0, 1] or not finite.",
+                "model_version":prediction.model_version, "data_cutoff_at":prediction.data_cutoff_at.isoformat(),
+            }))
             continue
         if abs(sum(probs.values()) - 1.0) > 1e-3:
             skipped += 1
+            db.add(PredictionEvaluation(prediction_id=prediction.id, metrics={
+                "status":"invalid_probability_snapshot", "reason":"1X2 probabilities do not sum to 1 within tolerance.",
+                "model_version":prediction.model_version, "data_cutoff_at":prediction.data_cutoff_at.isoformat(),
+            }))
             continue
         actual = "home_win" if result.home_goals > result.away_goals else "draw" if result.home_goals == result.away_goals else "away_win"
         brier = sum((probs[name] - float(name == actual)) ** 2 for name in OUTCOMES) / 3.0
