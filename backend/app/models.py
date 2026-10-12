@@ -81,7 +81,7 @@ class Fixture(Base, Timestamped):
     competition_id: Mapped[str] = mapped_column(ForeignKey("competitions.id"), nullable=False, index=True)
     home_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False, index=True)
     away_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False, index=True)
-    kickoff_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    kickoff_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="scheduled", index=True)
     season: Mapped[str | None] = mapped_column(String(32))
     venue: Mapped[str | None] = mapped_column(String(200))
