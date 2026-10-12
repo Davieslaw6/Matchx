@@ -2,7 +2,6 @@
 import hashlib
 import re
 from datetime import datetime, timezone
-from pathlib import PurePath
 
 import pytesseract
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -95,6 +94,18 @@ async def list_screenshot_imports(
 ):
     rows = (await db.scalars(select(ScreenshotImport).order_by(ScreenshotImport.created_at.desc()).limit(100))).all()
     return {"items": [_public(item) for item in rows]}
+
+@router.get("/{import_id}/image")
+async def get_screenshot_image(
+    import_id: str,
+    _: Session = Depends(require_owner),
+    db: AsyncSession = Depends(get_db),
+):
+    item = await db.get(ScreenshotImport, import_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail={"code":"import_not_found","message":"Screenshot import not found."})
+    return Response(content=item.image_data, media_type=item.mime_type,
+                    headers={"X-Content-Type-Options":"nosniff","Cache-Control":"private, no-store"})
 
 @router.get("/{import_id}")
 async def get_screenshot_import(
