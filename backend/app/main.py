@@ -14,6 +14,7 @@ from app.booking_codes.routes import router as booking_codes_router
 from app.config import get_settings
 from app.db import engine, SessionLocal
 from app.models import OwnerAccount
+from app.settings_routes import router as settings_router
 from app.sports.routes import router as fixtures_router
 from app.tickets.routes import router as tickets_router
 
@@ -43,6 +44,7 @@ app.include_router(screenshot_imports_router)
 app.include_router(history_router)
 app.include_router(fixtures_router)
 app.include_router(tickets_router)
+app.include_router(settings_router)
 app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allow_credentials=True,
                    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
                    allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Request-ID"])
