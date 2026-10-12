@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app.prediction.dixon_coles import MatchObservation, ModelFitError, fit_dixon_coles
+from app.prediction.dixon_coles import MatchObservation, ModelFitError, fit_dixon_coles, select_time_decay
 from app.prediction.poisson import derive_markets
 
 def sample_matches():
@@ -50,3 +50,15 @@ def test_insufficient_pre_cutoff_data_returns_reason():
 def test_naive_cutoff_is_rejected():
     with pytest.raises(ModelFitError, match="timezone-aware"):
         fit_dixon_coles(sample_matches(), data_cutoff=datetime(2026, 1, 1), min_matches=50)
+
+def test_time_decay_is_selected_with_expanding_chronological_folds():
+    selection = select_time_decay(
+        sample_matches(),
+        data_cutoff=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        candidates=(180, 365),
+        folds=2,
+        min_training_matches=50,
+    )
+    assert selection.best_days in (180.0, 365.0)
+    assert selection.folds_used >= 1
+    assert set(selection.mean_log_loss_by_days) <= {180.0, 365.0}
