@@ -3,7 +3,7 @@ from io import BytesIO
 import re
 from typing import Any
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps
 import pytesseract
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -24,7 +24,7 @@ def validate_image(data: bytes, content_type: str) -> tuple[str, int, int]:
             image_format = (image.format or "").upper()
             width, height = image.size
             image.verify()
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+    except (OSError, Image.DecompressionBombError) as exc:
         raise ImageValidationError("File is not a valid supported image.") from exc
     expected_type = _ALLOWED_FORMATS.get(image_format)
     if expected_type is None or content_type.split(";", 1)[0].strip().lower() != expected_type:
