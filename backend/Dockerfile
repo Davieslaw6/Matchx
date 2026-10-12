@@ -5,7 +5,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
-RUN addgroup --system matchx && adduser --system --ingroup matchx --home /app matchx
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system matchx && adduser --system --ingroup matchx --home /app matchx
 COPY pyproject.toml ./
 COPY app ./app
 COPY migrations ./migrations
