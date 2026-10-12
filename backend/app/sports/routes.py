@@ -66,7 +66,6 @@ async def list_fixtures(
         predicates.append(or_(home.name.ilike(pattern), away.name.ilike(pattern)))
     for predicate in predicates:
         base = base.where(predicate)
-        count_query = count_query.join(Competition, Fixture.competition_id == Competition.id) if False else count_query
     # Count filtering uses EXISTS for team matching, avoiding duplicate rows from joins.
     count_query = select(func.count(Fixture.id)).select_from(Fixture)
     if start_date:
