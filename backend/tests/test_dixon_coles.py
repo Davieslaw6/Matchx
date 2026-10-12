@@ -16,7 +16,7 @@ def sample_matches():
             home_team=home,
             away_team=away,
             home_goals=(index * 7) % 4,
-            away_goals=(index * 3) % 3,
+            away_goals=(index * 5 + 1) % 3,
             played_at=start + timedelta(days=index * 5),
         ))
     return matches
