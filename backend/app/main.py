@@ -12,6 +12,7 @@ from app.config import get_settings
 from app.db import engine, SessionLocal
 from app.models import OwnerAccount
 from app.sports.routes import router as fixtures_router
+from app.tickets.routes import router as tickets_router
 
 settings = get_settings()
 settings.validate_public_bind()
@@ -35,6 +36,7 @@ app = FastAPI(title="MATCH X API", version="0.2.0",
 app.include_router(auth_router)
 app.include_router(ai_router)
 app.include_router(fixtures_router)
+app.include_router(tickets_router)
 app.add_middleware(CORSMiddleware, allow_origins=[settings.allowed_origin], allow_credentials=True,
                    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
                    allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Request-ID"])
